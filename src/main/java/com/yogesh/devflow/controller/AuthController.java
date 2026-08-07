@@ -4,7 +4,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.yogesh.devflow.dto.request.LoginRequest;
 import com.yogesh.devflow.dto.request.RegisterRequest;
+import com.yogesh.devflow.dto.response.LoginResponse;
 import com.yogesh.devflow.dto.response.RegisterResponse;
 import com.yogesh.devflow.service.UserService;
 
@@ -27,5 +29,14 @@ public class AuthController {
         RegisterResponse response = userService.register(request);
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request) {
+
+        LoginResponse response = userService.login(request);
+
+        return ResponseEntity.ok(response);
     }
 }
