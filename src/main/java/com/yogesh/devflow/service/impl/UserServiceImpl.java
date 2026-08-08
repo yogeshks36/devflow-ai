@@ -1,5 +1,7 @@
 package com.yogesh.devflow.service.impl;
 
+import java.util.List;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,9 +22,10 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public UserServiceImpl(UserRepository userRepository,
-                           PasswordEncoder passwordEncoder,
-                           JwtService jwtService) {
+    public UserServiceImpl(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService) {
 
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -37,16 +40,22 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Email already exists");
         }
 
-        // Encrypt password
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        // Encrypt password using BCrypt
+        String encodedPassword =
+                passwordEncoder.encode(request.getPassword());
 
-        // Create user
+        // Create new user
         User user = new User();
+
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
         user.setPassword(encodedPassword);
+
+        // Default role
         user.setRole(Role.USER);
+
+        // New users are not verified initially
         user.setVerified(false);
 
         // Save user
@@ -54,6 +63,7 @@ public class UserServiceImpl implements UserService {
 
         // Build response
         RegisterResponse response = new RegisterResponse();
+
         response.setId(savedUser.getId());
         response.setFirstName(savedUser.getFirstName());
         response.setLastName(savedUser.getLastName());
@@ -69,23 +79,42 @@ public class UserServiceImpl implements UserService {
 
         // Find user by email
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+                .orElseThrow(() ->
+                        new RuntimeException("Invalid email or password"));
 
-        // Verify password
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        // Verify password against BCrypt hash
+        if (!passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword())) {
+
             throw new RuntimeException("Invalid email or password");
         }
 
         // Generate JWT
         String token = jwtService.generateToken(user.getEmail());
 
-        // Build response
+        // Build login response
         LoginResponse response = new LoginResponse();
+
         response.setToken(token);
         response.setUserId(user.getId());
         response.setEmail(user.getEmail());
         response.setRole(user.getRole().name());
 
         return response;
+    }
+
+    @Override
+    public User getCurrentUser(String email) {
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+
+        return userRepository.findAll();
     }
 }

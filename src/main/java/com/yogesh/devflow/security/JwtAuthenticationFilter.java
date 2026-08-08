@@ -2,6 +2,8 @@ package com.yogesh.devflow.security;
 
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,6 +18,9 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
@@ -35,49 +40,142 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
+        System.out.println("========== JWT FILTER ==========");
+        System.out.println("Request: "
+                + request.getMethod()
+                + " "
+                + request.getRequestURI());
 
-        // No Authorization header
+        String authHeader = request.getHeader("Authorization");
+
+        System.out.println("Authorization header: " + authHeader);
+
+        // No token
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
+            System.out.println("No Bearer token found.");
+
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Extract JWT token
+        // Extract token
         String jwt = authHeader.substring(7);
+
+        System.out.println("JWT received.");
 
         try {
 
-            // Extract email from JWT
+            // Extract email
             String email = jwtService.extractEmail(jwt);
 
-            // Authenticate only if user is not already authenticated
-            if (email != null
-                    && SecurityContextHolder.getContext().getAuthentication() == null) {
+            System.out.println("JWT email: " + email);
 
+            // Only authenticate if not already authenticated
+            if (email != null
+                    && SecurityContextHolder
+                            .getContext()
+                            .getAuthentication() == null) {
+
+                System.out.println(
+                        "No existing authentication. Loading user..."
+                );
+
+                // Load user
                 UserDetails userDetails =
                         userDetailsService.loadUserByUsername(email);
 
-                // Validate JWT
-                if (jwtService.isTokenValid(jwt, email)) {
+                System.out.println(
+                        "User loaded: "
+                                + userDetails.getUsername()
+                );
+
+                System.out.println(
+                        "Authorities: "
+                                + userDetails.getAuthorities()
+                );
+
+                // Validate token
+                boolean valid =
+                        jwtService.isTokenValid(jwt, email);
+
+                System.out.println(
+                        "JWT valid: " + valid
+                );
+
+                if (valid) {
 
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails,
                                     null,
-                                    userDetails.getAuthorities());
+                                    userDetails.getAuthorities()
+                            );
 
                     authentication.setDetails(
                             new WebAuthenticationDetailsSource()
-                                    .buildDetails(request));
+                                    .buildDetails(request)
+                    );
 
-                    SecurityContextHolder.getContext()
+                    SecurityContextHolder
+                            .getContext()
                             .setAuthentication(authentication);
+
+                    System.out.println(
+                            "AUTHENTICATION SET SUCCESSFULLY"
+                    );
+
+                    System.out.println(
+                            "Authenticated user: "
+                                    + SecurityContextHolder
+                                            .getContext()
+                                            .getAuthentication()
+                                            .getName()
+                    );
+
+                    System.out.println(
+                            "Authorities: "
+                                    + SecurityContextHolder
+                                            .getContext()
+                                            .getAuthentication()
+                                            .getAuthorities()
+                    );
+
+                } else {
+
+                    System.out.println(
+                            "JWT INVALID - authentication NOT set"
+                    );
                 }
+
+            } else {
+
+                System.out.println(
+                        "Authentication already exists or email is null."
+                );
             }
 
         } catch (Exception e) {
-            // Invalid JWT - continue without authentication
+
+            System.out.println(
+                    "========== JWT ERROR =========="
+            );
+
+            System.out.println(
+                    "Exception: "
+                            + e.getClass().getName()
+            );
+
+            System.out.println(
+                    "Message: "
+                            + e.getMessage()
+            );
+
+            e.printStackTrace();
+
+            System.out.println(
+                    "=============================="
+            );
         }
 
         filterChain.doFilter(request, response);

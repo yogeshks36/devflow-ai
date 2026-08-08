@@ -2,6 +2,7 @@ package com.yogesh.devflow.security;
 
 import java.util.Collections;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -23,14 +24,27 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email)
             throws UsernameNotFoundException {
 
+        System.out.println("CUSTOM USER DETAILS SERVICE");
+        System.out.println("Looking for email: " + email);
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found"));
+                        new UsernameNotFoundException(
+                                "User not found with email: " + email
+                        )
+                );
+
+        System.out.println("USER FOUND: " + user.getEmail());
+        System.out.println("USER ROLE: " + user.getRole());
 
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
-                Collections.emptyList()
+                Collections.singletonList(
+                        new SimpleGrantedAuthority(
+                                "ROLE_" + user.getRole().name()
+                        )
+                )
         );
     }
 }
