@@ -9,11 +9,16 @@ import com.yogesh.devflow.dto.request.LoginRequest;
 import com.yogesh.devflow.dto.request.RegisterRequest;
 import com.yogesh.devflow.dto.response.LoginResponse;
 import com.yogesh.devflow.dto.response.RegisterResponse;
+import com.yogesh.devflow.dto.response.UserResponse;
 import com.yogesh.devflow.entity.Role;
 import com.yogesh.devflow.entity.User;
+import com.yogesh.devflow.exception.ResourceNotFoundException;
 import com.yogesh.devflow.repository.UserRepository;
 import com.yogesh.devflow.security.JwtService;
 import com.yogesh.devflow.service.UserService;
+import com.yogesh.devflow.dto.request.UpdateProfileRequest;
+import com.yogesh.devflow.dto.request.UpdateRoleRequest;
+import com.yogesh.devflow.dto.request.ChangePasswordRequest;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -105,16 +110,103 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getCurrentUser(String email) {
+    public UserResponse getCurrentUser(String email) {
 
-        return userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new RuntimeException("User not found"));
+
+        return toUserResponse(user);
     }
 
     @Override
-    public List<User> getAllUsers() {
+    public List<UserResponse> getAllUsers() {
 
-        return userRepository.findAll();
+        return userRepository.findAll()
+                .stream()
+                .map(this::toUserResponse)
+                .toList();
+    }
+
+    @Override
+    public UserResponse updateProfile(
+            String email,
+            UpdateProfileRequest request) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+
+        User updatedUser = userRepository.save(user);
+
+        return toUserResponse(updatedUser);
+    }
+
+    @Override
+    public void changePassword(
+            String email,
+            ChangePasswordRequest request) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+    // Verify current password
+        if (!passwordEncoder.matches(
+                request.getCurrentPassword(),
+                user.getPassword())) {
+
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+    // Prevent using the same password
+        if (passwordEncoder.matches(
+                request.getNewPassword(),
+                user.getPassword())) {
+
+            throw new RuntimeException(
+                    "New password must be different from current password");
+        }
+
+    // Encode and save new password
+        user.setPassword(
+                passwordEncoder.encode(
+                        request.getNewPassword()
+                )
+        );
+
+        userRepository.save(user);
+    }
+
+    @Override
+        public UserResponse updateUserRole(Long userId, UpdateRoleRequest request) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found with id: " + userId)
+                );
+
+        user.setRole(request.getRole());
+
+        User updatedUser = userRepository.save(user);
+
+        return toUserResponse(updatedUser);
+    }
+
+    private UserResponse toUserResponse(User user) {
+
+        UserResponse response = new UserResponse();
+
+        response.setId(user.getId());
+        response.setFirstName(user.getFirstName());
+        response.setLastName(user.getLastName());
+        response.setEmail(user.getEmail());
+        response.setRole(user.getRole().name());
+        response.setVerified(user.getVerified());
+
+        return response;
     }
 }
