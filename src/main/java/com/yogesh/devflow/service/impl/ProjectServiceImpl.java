@@ -1,8 +1,7 @@
 package com.yogesh.devflow.service.impl;
 
-import java.util.List;
-
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.yogesh.devflow.dto.request.ProjectRequest;
@@ -28,6 +27,10 @@ public class ProjectServiceImpl implements ProjectService {
         this.userRepository = userRepository;
     }
 
+    // =========================
+    // CREATE PROJECT
+    // =========================
+
     @Override
     public ProjectResponse createProject(
             String email,
@@ -41,39 +44,54 @@ public class ProjectServiceImpl implements ProjectService {
         project.setDescription(request.getDescription());
         project.setOwner(owner);
 
-        Project savedProject = projectRepository.save(project);
+        Project savedProject =
+                projectRepository.save(project);
 
         return toProjectResponse(savedProject);
     }
 
+    // =========================
+    // GET MY PROJECTS
+    // =========================
+
     @Override
-    public List<ProjectResponse> getMyProjects(
-            String email) {
+    public Page<ProjectResponse> getMyProjects(
+            String email,
+            Pageable pageable) {
 
         User owner = getUserByEmail(email);
 
-        return projectRepository.findByOwner(owner)
-                .stream()
-                .map(this::toProjectResponse)
-                .toList();
+        return projectRepository
+                .findByOwner(owner, pageable)
+                .map(this::toProjectResponse);
     }
+
+    // =========================
+    // GET PROJECT BY ID
+    // =========================
 
     @Override
     public ProjectResponse getProjectById(
             String email,
             Long projectId) {
 
-        User currentUser = getUserByEmail(email);
+        User owner = getUserByEmail(email);
 
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Project not found with id: " + projectId));
-
-        checkOwnership(currentUser, project);
+        Project project =
+                projectRepository
+                        .findByIdAndOwner(
+                                projectId,
+                                owner)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Project not found"));
 
         return toProjectResponse(project);
     }
+
+    // =========================
+    // UPDATE PROJECT
+    // =========================
 
     @Override
     public ProjectResponse updateProject(
@@ -81,14 +99,16 @@ public class ProjectServiceImpl implements ProjectService {
             Long projectId,
             ProjectRequest request) {
 
-        User currentUser = getUserByEmail(email);
+        User owner = getUserByEmail(email);
 
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Project not found with id: " + projectId));
-
-        checkOwnership(currentUser, project);
+        Project project =
+                projectRepository
+                        .findByIdAndOwner(
+                                projectId,
+                                owner)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Project not found"));
 
         project.setName(request.getName());
         project.setDescription(request.getDescription());
@@ -99,44 +119,45 @@ public class ProjectServiceImpl implements ProjectService {
         return toProjectResponse(updatedProject);
     }
 
+    // =========================
+    // DELETE PROJECT
+    // =========================
+
     @Override
     public void deleteProject(
             String email,
             Long projectId) {
 
-        User currentUser = getUserByEmail(email);
+        User owner = getUserByEmail(email);
 
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Project not found with id: " + projectId));
-
-        checkOwnership(currentUser, project);
+        Project project =
+                projectRepository
+                        .findByIdAndOwner(
+                                projectId,
+                                owner)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Project not found"));
 
         projectRepository.delete(project);
     }
 
+    // =========================
+    // FIND USER
+    // =========================
+
     private User getUserByEmail(String email) {
 
-        return userRepository.findByEmail(email)
+        return userRepository
+                .findByEmail(email)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "User not found with email: " + email));
+                                "User not found"));
     }
 
-    private void checkOwnership(
-            User currentUser,
-            Project project) {
-
-        if (project.getOwner() == null ||
-                !project.getOwner()
-                        .getId()
-                        .equals(currentUser.getId())) {
-
-            throw new AccessDeniedException(
-                    "You do not have permission to access this project");
-        }
-    }
+    // =========================
+    // CONVERT TO RESPONSE
+    // =========================
 
     private ProjectResponse toProjectResponse(
             Project project) {

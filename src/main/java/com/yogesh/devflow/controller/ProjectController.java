@@ -1,7 +1,8 @@
 package com.yogesh.devflow.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yogesh.devflow.dto.request.ProjectRequest;
@@ -30,7 +32,10 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
-    // Create project
+    // =========================
+    // CREATE PROJECT
+    // =========================
+
     @PostMapping
     public ResponseEntity<ProjectResponse> createProject(
             Authentication authentication,
@@ -46,19 +51,33 @@ public class ProjectController {
                 .body(response);
     }
 
-    // Get all projects owned by current user
+    // =========================
+    // GET MY PROJECTS
+    // =========================
+
     @GetMapping
-    public ResponseEntity<List<ProjectResponse>> getMyProjects(
-            Authentication authentication) {
+    public ResponseEntity<Page<ProjectResponse>> getMyProjects(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
         String email = authentication.getName();
 
-        return ResponseEntity.ok(
-                projectService.getMyProjects(email)
-        );
+        Pageable pageable =
+                PageRequest.of(page, size);
+
+        Page<ProjectResponse> response =
+                projectService.getMyProjects(
+                        email,
+                        pageable);
+
+        return ResponseEntity.ok(response);
     }
 
-    // Get one project
+    // =========================
+    // GET PROJECT BY ID
+    // =========================
+
     @GetMapping("/{projectId}")
     public ResponseEntity<ProjectResponse> getProjectById(
             Authentication authentication,
@@ -66,12 +85,18 @@ public class ProjectController {
 
         String email = authentication.getName();
 
-        return ResponseEntity.ok(
-                projectService.getProjectById(email, projectId)
-        );
+        ProjectResponse response =
+                projectService.getProjectById(
+                        email,
+                        projectId);
+
+        return ResponseEntity.ok(response);
     }
 
-    // Update project
+    // =========================
+    // UPDATE PROJECT
+    // =========================
+
     @PutMapping("/{projectId}")
     public ResponseEntity<ProjectResponse> updateProject(
             Authentication authentication,
@@ -80,16 +105,19 @@ public class ProjectController {
 
         String email = authentication.getName();
 
-        return ResponseEntity.ok(
+        ProjectResponse response =
                 projectService.updateProject(
                         email,
                         projectId,
-                        request
-                )
-        );
+                        request);
+
+        return ResponseEntity.ok(response);
     }
 
-    // Delete project
+    // =========================
+    // DELETE PROJECT
+    // =========================
+
     @DeleteMapping("/{projectId}")
     public ResponseEntity<Void> deleteProject(
             Authentication authentication,
@@ -97,8 +125,12 @@ public class ProjectController {
 
         String email = authentication.getName();
 
-        projectService.deleteProject(email, projectId);
+        projectService.deleteProject(
+                email,
+                projectId);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 }

@@ -1,6 +1,7 @@
 package com.yogesh.devflow.service;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.yogesh.devflow.dto.request.ProjectRequest;
 import com.yogesh.devflow.dto.response.ProjectResponse;
@@ -11,8 +12,9 @@ public interface ProjectService {
             String email,
             ProjectRequest request);
 
-    List<ProjectResponse> getMyProjects(
-            String email);
+    Page<ProjectResponse> getMyProjects(
+            String email,
+            Pageable pageable);
 
     ProjectResponse getProjectById(
             String email,

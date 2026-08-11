@@ -1,9 +1,8 @@
 package com.yogesh.devflow.service.impl;
 
-
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import com.yogesh.devflow.dto.request.TaskRequest;
@@ -13,11 +12,11 @@ import com.yogesh.devflow.entity.Task;
 import com.yogesh.devflow.entity.TaskPriority;
 import com.yogesh.devflow.entity.TaskStatus;
 import com.yogesh.devflow.entity.User;
+import com.yogesh.devflow.exception.ResourceNotFoundException;
 import com.yogesh.devflow.repository.ProjectRepository;
 import com.yogesh.devflow.repository.TaskRepository;
 import com.yogesh.devflow.repository.UserRepository;
 import com.yogesh.devflow.service.TaskService;
-import com.yogesh.devflow.exception.ResourceNotFoundException;
 
 @Service
 public class TaskServiceImpl implements TaskService {
@@ -36,6 +35,10 @@ public class TaskServiceImpl implements TaskService {
         this.userRepository = userRepository;
     }
 
+    // =========================
+    // CREATE TASK
+    // =========================
+
     @Override
     public TaskResponse createTask(
             String email,
@@ -44,7 +47,8 @@ public class TaskServiceImpl implements TaskService {
 
         User owner = getUserByEmail(email);
 
-        Project project = getOwnedProject(projectId, owner);
+        Project project =
+                getOwnedProject(projectId, owner);
 
         Task task = new Task();
 
@@ -67,21 +71,33 @@ public class TaskServiceImpl implements TaskService {
 
         task.setProject(project);
 
+        // =========================
+        // ASSIGNEE
+        // =========================
+
         if (request.getAssigneeId() != null) {
 
-            User assignee = userRepository.findById(
-                    request.getAssigneeId()
-            ).orElseThrow(() ->
-                    new RuntimeException("Assignee not found")
-            );
+            User assignee =
+                    userRepository
+                            .findById(request.getAssigneeId())
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException(
+                                            "Assignee not found"
+                                    )
+                            );
 
             task.setAssignee(assignee);
         }
 
-        Task savedTask = taskRepository.save(task);
+        Task savedTask =
+                taskRepository.save(task);
 
         return toTaskResponse(savedTask);
     }
+
+    // =========================
+    // GET PROJECT TASKS
+    // =========================
 
     @Override
     public Page<TaskResponse> getProjectTasks(
@@ -91,12 +107,17 @@ public class TaskServiceImpl implements TaskService {
 
         User owner = getUserByEmail(email);
 
-        Project project = getOwnedProject(projectId, owner);
+        Project project =
+                getOwnedProject(projectId, owner);
 
         return taskRepository
                 .findByProject(project, pageable)
                 .map(this::toTaskResponse);
     }
+
+    // =========================
+    // GET TASK BY ID
+    // =========================
 
     @Override
     public TaskResponse getTaskById(
@@ -105,12 +126,20 @@ public class TaskServiceImpl implements TaskService {
 
         User owner = getUserByEmail(email);
 
-        Task task = getTask(taskId);
+        Task task =
+                getTask(taskId);
 
-        verifyTaskOwnership(task, owner);
+        verifyTaskOwnership(
+                task,
+                owner
+        );
 
         return toTaskResponse(task);
     }
+
+    // =========================
+    // UPDATE TASK
+    // =========================
 
     @Override
     public TaskResponse updateTask(
@@ -120,30 +149,47 @@ public class TaskServiceImpl implements TaskService {
 
         User owner = getUserByEmail(email);
 
-        Task task = getTask(taskId);
+        Task task =
+                getTask(taskId);
 
-        verifyTaskOwnership(task, owner);
+        verifyTaskOwnership(
+                task,
+                owner
+        );
 
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
 
         if (request.getStatus() != null) {
-            task.setStatus(request.getStatus());
+            task.setStatus(
+                    request.getStatus()
+            );
         }
 
         if (request.getPriority() != null) {
-            task.setPriority(request.getPriority());
+            task.setPriority(
+                    request.getPriority()
+            );
         }
 
-        task.setDueDate(request.getDueDate());
+        task.setDueDate(
+                request.getDueDate()
+        );
+
+        // =========================
+        // UPDATE ASSIGNEE
+        // =========================
 
         if (request.getAssigneeId() != null) {
 
-            User assignee = userRepository.findById(
-                    request.getAssigneeId()
-            ).orElseThrow(() ->
-                    new RuntimeException("Assignee not found")
-            );
+            User assignee =
+                    userRepository
+                            .findById(request.getAssigneeId())
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException(
+                                            "Assignee not found"
+                                    )
+                            );
 
             task.setAssignee(assignee);
 
@@ -152,55 +198,90 @@ public class TaskServiceImpl implements TaskService {
             task.setAssignee(null);
         }
 
-        Task updatedTask = taskRepository.save(task);
+        Task updatedTask =
+                taskRepository.save(task);
 
         return toTaskResponse(updatedTask);
     }
+
+    // =========================
+    // DELETE TASK
+    // =========================
 
     @Override
     public void deleteTask(
             String email,
             Long taskId) {
 
-        User owner = getUserByEmail(email);
+        User owner =
+                getUserByEmail(email);
 
-        Task task = getTask(taskId);
+        Task task =
+                getTask(taskId);
 
-        verifyTaskOwnership(task, owner);
+        verifyTaskOwnership(
+                task,
+                owner
+        );
 
         taskRepository.delete(task);
     }
 
-    private User getUserByEmail(String email) {
+    // =========================
+    // FIND USER BY EMAIL
+    // =========================
 
-        return userRepository.findByEmail(email)
+    private User getUserByEmail(
+            String email) {
+
+        return userRepository
+                .findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found")
+                        new ResourceNotFoundException(
+                                "User not found"
+                        )
                 );
     }
+
+    // =========================
+    // FIND OWNED PROJECT
+    // =========================
 
     private Project getOwnedProject(
             Long projectId,
             User owner) {
 
         return projectRepository
-                .findByIdAndOwner(projectId, owner)
+                .findByIdAndOwner(
+                        projectId,
+                        owner
+                )
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                            "Project not found with id: " + projectId
+                                "Project not found"
                         )
                 );
     }
 
-    private Task getTask(Long taskId) {
+    // =========================
+    // FIND TASK
+    // =========================
 
-        return taskRepository.findById(taskId)
+    private Task getTask(
+            Long taskId) {
+
+        return taskRepository
+                .findById(taskId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                            "Task not found with id: " + taskId
+                                "Task not found"
                         )
                 );
     }
+
+    // =========================
+    // VERIFY TASK OWNERSHIP
+    // =========================
 
     private void verifyTaskOwnership(
             Task task,
@@ -213,28 +294,54 @@ public class TaskServiceImpl implements TaskService {
                         .getId()
                         .equals(owner.getId())) {
 
-            throw new org.springframework.security.access.AccessDeniedException(
+            throw new AccessDeniedException(
                     "You do not have permission to access this task"
             );
         }
     }
 
-    private TaskResponse toTaskResponse(Task task) {
+    // =========================
+    // CONVERT TASK TO RESPONSE
+    // =========================
 
-        TaskResponse response = new TaskResponse();
+    private TaskResponse toTaskResponse(
+            Task task) {
+
+        TaskResponse response =
+                new TaskResponse();
 
         response.setId(task.getId());
         response.setTitle(task.getTitle());
-        response.setDescription(task.getDescription());
-        response.setStatus(task.getStatus());
-        response.setPriority(task.getPriority());
-        response.setDueDate(task.getDueDate());
+        response.setDescription(
+                task.getDescription()
+        );
+
+        response.setStatus(
+                task.getStatus()
+        );
+
+        response.setPriority(
+                task.getPriority()
+        );
+
+        response.setDueDate(
+                task.getDueDate()
+        );
+
+        // =========================
+        // PROJECT
+        // =========================
 
         if (task.getProject() != null) {
+
             response.setProjectId(
                     task.getProject().getId()
             );
         }
+
+        // =========================
+        // ASSIGNEE
+        // =========================
 
         if (task.getAssignee() != null) {
 
@@ -247,8 +354,13 @@ public class TaskServiceImpl implements TaskService {
             );
         }
 
-        response.setCreatedAt(task.getCreatedAt());
-        response.setUpdatedAt(task.getUpdatedAt());
+        response.setCreatedAt(
+                task.getCreatedAt()
+        );
+
+        response.setUpdatedAt(
+                task.getUpdatedAt()
+        );
 
         return response;
     }
