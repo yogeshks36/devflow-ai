@@ -15,6 +15,7 @@ import com.yogesh.devflow.repository.ProjectMemberRepository;
 import com.yogesh.devflow.repository.ProjectRepository;
 import com.yogesh.devflow.repository.UserRepository;
 import com.yogesh.devflow.service.ProjectMemberService;
+import org.springframework.security.access.AccessDeniedException;
 
 @Service
 public class ProjectMemberServiceImpl implements ProjectMemberService {
@@ -95,25 +96,46 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
     // GET MEMBERS
     // =========================
 
-    @Override
+   @Override
     public List<ProjectMemberResponse> getMembers(
             String ownerEmail,
             Long projectId) {
 
-        // Find owner
-        User owner = getUserByEmail(ownerEmail);
+        User user = getUserByEmail(ownerEmail);
 
-        // Make sure project belongs to owner
-        Project project = getOwnedProject(
-                projectId,
-                owner
-        );
+        Project project =
+                projectRepository
+                        .findById(projectId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Project not found"
+                                )
+                        );
 
-        return projectMemberRepository
-                .findByProject(project)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        boolean isOwner =
+                project.getOwner()
+                        .getId()
+                        .equals(user.getId());
+
+        boolean isMember =
+                projectMemberRepository
+                        .existsByProjectAndUser(
+                                project,
+                                user
+                        );
+
+        if (!isOwner && !isMember) {
+
+             throw new AccessDeniedException(
+                    "You do not have permission to access this project"
+            );
+        }
+
+         return projectMemberRepository
+                 .findByProject(project)
+                 .stream()
+                 .map(this::toResponse)
+                 .toList();
     }
 
     // =========================

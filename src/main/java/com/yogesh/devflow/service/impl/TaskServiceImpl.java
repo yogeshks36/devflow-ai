@@ -13,6 +13,7 @@ import com.yogesh.devflow.entity.TaskPriority;
 import com.yogesh.devflow.entity.TaskStatus;
 import com.yogesh.devflow.entity.User;
 import com.yogesh.devflow.exception.ResourceNotFoundException;
+import com.yogesh.devflow.repository.ProjectMemberRepository;
 import com.yogesh.devflow.repository.ProjectRepository;
 import com.yogesh.devflow.repository.TaskRepository;
 import com.yogesh.devflow.repository.UserRepository;
@@ -24,15 +25,18 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final ProjectMemberRepository projectMemberRepository;
 
     public TaskServiceImpl(
             TaskRepository taskRepository,
             ProjectRepository projectRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            ProjectMemberRepository projectMemberRepository) {
 
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
+        this.projectMemberRepository = projectMemberRepository;
     }
 
     // =========================
@@ -85,6 +89,27 @@ public class TaskServiceImpl implements TaskService {
                                             "Assignee not found"
                                     )
                             );
+
+            // Project owner can be assigned
+            boolean isOwner =
+                    assignee.getId()
+                            .equals(owner.getId());
+
+            // Check whether user is a project member
+            boolean isMember =
+                    projectMemberRepository
+                            .existsByProjectAndUser(
+                                    project,
+                                    assignee
+                            );
+
+            // Existing user but not part of project
+            if (!isOwner && !isMember) {
+
+                throw new AccessDeniedException(
+                        "User is not a member of this project"
+                );
+            }
 
             task.setAssignee(assignee);
         }
@@ -161,12 +186,14 @@ public class TaskServiceImpl implements TaskService {
         task.setDescription(request.getDescription());
 
         if (request.getStatus() != null) {
+
             task.setStatus(
                     request.getStatus()
             );
         }
 
         if (request.getPriority() != null) {
+
             task.setPriority(
                     request.getPriority()
             );
@@ -191,10 +218,35 @@ public class TaskServiceImpl implements TaskService {
                                     )
                             );
 
+            User projectOwner =
+                    task.getProject().getOwner();
+
+            // Project owner can be assigned
+            boolean isOwner =
+                    assignee.getId()
+                            .equals(projectOwner.getId());
+
+            // Check whether user is a project member
+            boolean isMember =
+                    projectMemberRepository
+                            .existsByProjectAndUser(
+                                    task.getProject(),
+                                    assignee
+                            );
+
+            // Existing user but not part of project
+            if (!isOwner && !isMember) {
+
+                throw new AccessDeniedException(
+                        "User is not a member of this project"
+                );
+            }
+
             task.setAssignee(assignee);
 
         } else {
 
+            // No assigneeId means remove current assignee
             task.setAssignee(null);
         }
 
@@ -287,9 +339,9 @@ public class TaskServiceImpl implements TaskService {
             Task task,
             User owner) {
 
-        if (task.getProject() == null ||
-                task.getProject().getOwner() == null ||
-                !task.getProject()
+        if (task.getProject() == null
+                || task.getProject().getOwner() == null
+                || !task.getProject()
                         .getOwner()
                         .getId()
                         .equals(owner.getId())) {
@@ -310,8 +362,14 @@ public class TaskServiceImpl implements TaskService {
         TaskResponse response =
                 new TaskResponse();
 
-        response.setId(task.getId());
-        response.setTitle(task.getTitle());
+        response.setId(
+                task.getId()
+        );
+
+        response.setTitle(
+                task.getTitle()
+        );
+
         response.setDescription(
                 task.getDescription()
         );
