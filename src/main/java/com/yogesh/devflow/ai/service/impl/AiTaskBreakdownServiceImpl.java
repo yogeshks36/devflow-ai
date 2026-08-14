@@ -51,13 +51,23 @@ public class AiTaskBreakdownServiceImpl
                 """.formatted(
                 taskId,
                 title,
-                description != null ? description : "No description provided"
+                description != null
+                        ? description
+                        : "No description provided"
         );
 
         try {
 
+            // =========================
+            // CALL GEMINI
+            // =========================
+
             String aiResponse =
                     geminiClient.generateContent(prompt);
+
+            // =========================
+            // PARSE AI RESPONSE
+            // =========================
 
             TaskBreakdownItem[] items =
                     objectMapper.readValue(
@@ -65,12 +75,20 @@ public class AiTaskBreakdownServiceImpl
                             TaskBreakdownItem[].class
                     );
 
+            // =========================
+            // VALIDATE AI RESPONSE
+            // =========================
+
             if (items == null || items.length == 0) {
 
                 throw new AiServiceException(
                         "AI returned an empty task breakdown"
                 );
             }
+
+            // =========================
+            // CREATE RESPONSE
+            // =========================
 
             TaskBreakdownResponse response =
                     new TaskBreakdownResponse();
