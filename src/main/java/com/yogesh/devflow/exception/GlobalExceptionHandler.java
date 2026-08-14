@@ -133,6 +133,27 @@ public class GlobalExceptionHandler {
     }
 
     // =========================
+    // 502 - AI SERVICE ERROR
+    // =========================
+
+    @ExceptionHandler(AiServiceException.class)
+    public ResponseEntity<Map<String, String>> handleAiServiceException(
+             AiServiceException ex) {
+
+        Map<String, String> response = new HashMap<>();
+
+        response.put("error", "AI Service Unavailable");
+        response.put(
+                "message",
+                "The AI service is currently unavailable. Please try again later."
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
+                .body(response);
+        }
+
+    // =========================
     // 500 - UNEXPECTED ERROR
     // =========================
 
@@ -149,6 +170,24 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(response);
+    }
+
+    // =========================
+    // 429 - AI RATE LIMIT
+    // =========================
+
+    @ExceptionHandler(AiRateLimitException.class)
+    public ResponseEntity<Map<String, String>> handleAiRateLimit(
+            AiRateLimitException ex) {
+
+        Map<String, String> response = new HashMap<>();
+
+        response.put("error", "Too Many Requests");
+        response.put("message", ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
                 .body(response);
     }
 }

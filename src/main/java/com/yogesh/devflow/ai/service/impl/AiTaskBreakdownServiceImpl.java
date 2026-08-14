@@ -26,11 +26,50 @@ public class AiTaskBreakdownServiceImpl
         this.objectMapper = objectMapper;
     }
 
+    // =========================
+    // GENERATE TASK BREAKDOWN
+    // =========================
+
     @Override
     public TaskBreakdownResponse generateBreakdown(
             Long taskId,
             String title,
             String description) {
+
+        // =========================
+        // INPUT VALIDATION
+        // =========================
+
+
+        if (taskId == null || taskId <= 0) {
+            throw new IllegalArgumentException(
+                "Task ID must be a positive number"
+            );
+        }
+
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException(
+                "Task title cannot be empty"
+            );
+        }
+
+        if (title.length() > 200) {
+            throw new IllegalArgumentException(
+                "Task title cannot exceed 200 characters"
+            );
+        }
+
+        if (description != null
+            && description.length() > 5000) {
+
+            throw new IllegalArgumentException(
+                "Task description cannot exceed 5000 characters"
+            );
+        }
+
+        // =========================
+        // BUILD PROMPT
+        // =========================
 
         String prompt = """
                 Break the following software development task
@@ -76,18 +115,47 @@ public class AiTaskBreakdownServiceImpl
                     );
 
             // =========================
-            // VALIDATE AI RESPONSE
+            // VALIDATE RESPONSE
             // =========================
 
-            if (items == null || items.length == 0) {
+            if (items == null
+                    || items.length == 0) {
 
                 throw new AiServiceException(
                         "AI returned an empty task breakdown"
                 );
             }
 
+            // Must contain 3 to 6 subtasks
+
+            if (items.length < 3
+                    || items.length > 6) {
+
+                throw new AiServiceException(
+                        "AI returned an invalid number of subtasks"
+                );
+            }
+
             // =========================
-            // CREATE RESPONSE
+            // VALIDATE EACH ITEM
+            // =========================
+
+            for (TaskBreakdownItem item : items) {
+
+                if (item == null
+                        || item.getTitle() == null
+                        || item.getTitle().isBlank()
+                        || item.getDescription() == null
+                        || item.getDescription().isBlank()) {
+
+                    throw new AiServiceException(
+                            "AI returned an invalid task breakdown item"
+                    );
+                }
+            }
+
+            // =========================
+            // CREATE RESPONSE DTO
             // =========================
 
             TaskBreakdownResponse response =
@@ -101,9 +169,13 @@ public class AiTaskBreakdownServiceImpl
 
         } catch (AiServiceException e) {
 
+            // Preserve our custom AI exceptions
+
             throw e;
 
         } catch (Exception e) {
+
+            // JSON parsing / unexpected errors
 
             throw new AiServiceException(
                     "AI returned a response that could not be parsed",
