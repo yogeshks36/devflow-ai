@@ -2,6 +2,7 @@ package com.yogesh.devflow.service.impl;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import com.yogesh.devflow.dto.request.ProjectRequest;
@@ -9,6 +10,7 @@ import com.yogesh.devflow.dto.response.ProjectResponse;
 import com.yogesh.devflow.entity.Project;
 import com.yogesh.devflow.entity.User;
 import com.yogesh.devflow.exception.ResourceNotFoundException;
+import com.yogesh.devflow.repository.ProjectMemberRepository;
 import com.yogesh.devflow.repository.ProjectRepository;
 import com.yogesh.devflow.repository.UserRepository;
 import com.yogesh.devflow.service.ProjectService;
@@ -18,13 +20,16 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final ProjectMemberRepository projectMemberRepository;
 
     public ProjectServiceImpl(
             ProjectRepository projectRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            ProjectMemberRepository projectMemberRepository) {
 
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
+        this.projectMemberRepository = projectMemberRepository;
     }
 
     // =========================
@@ -68,6 +73,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     // =========================
     // GET PROJECT BY ID
+    // OWNER OR MEMBER
     // =========================
 
     @Override
@@ -75,22 +81,36 @@ public class ProjectServiceImpl implements ProjectService {
             String email,
             Long projectId) {
 
-        User owner = getUserByEmail(email);
+        User user = getUserByEmail(email);
 
         Project project =
                 projectRepository
-                        .findByIdAndOwner(
-                                projectId,
-                                owner)
+                        .findById(projectId)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
                                         "Project not found"));
+
+        boolean isOwner =
+                isOwner(project, user);
+
+        boolean isMember =
+                projectMemberRepository
+                        .existsByProjectAndUser(
+                                project,
+                                user);
+
+        if (!isOwner && !isMember) {
+
+            throw new AccessDeniedException(
+                    "You are not a member of this project");
+        }
 
         return toProjectResponse(project);
     }
 
     // =========================
     // UPDATE PROJECT
+    // OWNER ONLY
     // =========================
 
     @Override
@@ -99,16 +119,20 @@ public class ProjectServiceImpl implements ProjectService {
             Long projectId,
             ProjectRequest request) {
 
-        User owner = getUserByEmail(email);
+        User user = getUserByEmail(email);
 
         Project project =
                 projectRepository
-                        .findByIdAndOwner(
-                                projectId,
-                                owner)
+                        .findById(projectId)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
                                         "Project not found"));
+
+        if (!isOwner(project, user)) {
+
+            throw new AccessDeniedException(
+                    "Only the project owner can update this project");
+        }
 
         project.setName(request.getName());
         project.setDescription(request.getDescription());
@@ -121,6 +145,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     // =========================
     // DELETE PROJECT
+    // OWNER ONLY
     // =========================
 
     @Override
@@ -128,22 +153,40 @@ public class ProjectServiceImpl implements ProjectService {
             String email,
             Long projectId) {
 
-        User owner = getUserByEmail(email);
+        User user = getUserByEmail(email);
 
         Project project =
                 projectRepository
-                        .findByIdAndOwner(
-                                projectId,
-                                owner)
+                        .findById(projectId)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
                                         "Project not found"));
+
+        if (!isOwner(project, user)) {
+
+            throw new AccessDeniedException(
+                    "Only the project owner can delete this project");
+        }
 
         projectRepository.delete(project);
     }
 
     // =========================
-    // FIND USER
+    // CHECK PROJECT OWNER
+    // =========================
+
+    private boolean isOwner(
+            Project project,
+            User user) {
+
+        return project.getOwner() != null
+                && project.getOwner()
+                        .getId()
+                        .equals(user.getId());
+    }
+
+    // =========================
+    // FIND USER BY EMAIL
     // =========================
 
     private User getUserByEmail(String email) {
@@ -156,7 +199,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     // =========================
-    // CONVERT TO RESPONSE
+    // CONVERT ENTITY TO DTO
     // =========================
 
     private ProjectResponse toProjectResponse(
