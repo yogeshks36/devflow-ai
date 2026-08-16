@@ -16,10 +16,17 @@ import com.yogesh.devflow.dto.request.AddProjectMemberRequest;
 import com.yogesh.devflow.dto.response.ProjectMemberResponse;
 import com.yogesh.devflow.service.ProjectMemberService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/projects")
+@Tag(
+    name = "Project Members",
+    description = "Project membership management APIs"
+)
 public class ProjectMemberController {
 
     private final ProjectMemberService projectMemberService;
@@ -34,6 +41,10 @@ public class ProjectMemberController {
     // ADD MEMBER
     // =========================
 
+    @Operation(
+        summary = "Add a project member",
+        description = "Adds a user to a project. Only the project owner can add members."
+    )
     @PostMapping("/{projectId}/members")
     public ResponseEntity<ProjectMemberResponse> addMember(
             Authentication authentication,
@@ -58,6 +69,10 @@ public class ProjectMemberController {
     // GET MEMBERS
     // =========================
 
+    @Operation(
+        summary = "Get project members",
+        description = "Returns all members belonging to a project."
+    )
     @GetMapping("/{projectId}/members")
     public ResponseEntity<List<ProjectMemberResponse>> getMembers(
             Authentication authentication,
@@ -78,6 +93,10 @@ public class ProjectMemberController {
     // REMOVE MEMBER
     // =========================
 
+    @Operation(
+        summary = "Remove a project member",
+        description = "Removes a user from a project. Only the project owner can remove members."
+    )
     @DeleteMapping("/{projectId}/members/{userId}")
     public ResponseEntity<Void> removeMember(
             Authentication authentication,

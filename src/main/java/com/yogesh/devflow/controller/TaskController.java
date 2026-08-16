@@ -19,10 +19,17 @@ import com.yogesh.devflow.dto.request.TaskRequest;
 import com.yogesh.devflow.dto.response.TaskResponse;
 import com.yogesh.devflow.service.TaskService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api")
+@Tag(
+    name = "Tasks",
+    description = "Task management APIs"
+)
 public class TaskController {
 
     private final TaskService taskService;
@@ -35,6 +42,10 @@ public class TaskController {
     // CREATE TASK
     // =========================
 
+    @Operation(
+        summary = "Create a task",
+        description = "Creates a new task inside a project."
+    )
     @PostMapping("/projects/{projectId}/tasks")
     public ResponseEntity<TaskResponse> createTask(
             Authentication authentication,
@@ -59,6 +70,10 @@ public class TaskController {
     // GET PROJECT TASKS
     // =========================
 
+    @Operation(
+        summary = "Get project tasks",
+        description = "Returns a paginated list of tasks belonging to a project."
+    )
     @GetMapping("/projects/{projectId}/tasks")
     public ResponseEntity<Page<TaskResponse>> getProjectTasks(
             Authentication authentication,
@@ -85,6 +100,10 @@ public class TaskController {
     // GET SINGLE TASK
     // =========================
 
+    @Operation(
+        summary = "Get task by ID",
+        description = "Returns a task accessible to the authenticated user."
+    )
     @GetMapping("/tasks/{taskId}")
     public ResponseEntity<TaskResponse> getTaskById(
             Authentication authentication,
@@ -105,6 +124,10 @@ public class TaskController {
     // UPDATE TASK
     // =========================
 
+    @Operation(
+        summary = "Update a task",
+        description = "Updates an existing task."
+    )
     @PutMapping("/tasks/{taskId}")
     public ResponseEntity<TaskResponse> updateTask(
             Authentication authentication,
@@ -127,6 +150,10 @@ public class TaskController {
     // DELETE TASK
     // =========================
 
+    @Operation(
+        summary = "Delete a task",
+        description = "Deletes an existing task."
+    )
     @DeleteMapping("/tasks/{taskId}")
     public ResponseEntity<Void> deleteTask(
             Authentication authentication,
@@ -139,6 +166,8 @@ public class TaskController {
                 taskId
         );
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 }

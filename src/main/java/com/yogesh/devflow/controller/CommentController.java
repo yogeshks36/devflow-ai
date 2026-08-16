@@ -19,10 +19,17 @@ import com.yogesh.devflow.dto.request.CommentRequest;
 import com.yogesh.devflow.dto.response.CommentResponse;
 import com.yogesh.devflow.service.CommentService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api")
+@Tag(
+    name = "Comments",
+    description = "Task comment management APIs"
+)
 public class CommentController {
 
     private final CommentService commentService;
@@ -37,6 +44,10 @@ public class CommentController {
     // CREATE COMMENT
     // =========================
 
+    @Operation(
+        summary = "Create a comment",
+        description = "Creates a comment on a task."
+    )
     @PostMapping("/tasks/{taskId}/comments")
     public ResponseEntity<CommentResponse> createComment(
             Authentication authentication,
@@ -61,6 +72,10 @@ public class CommentController {
     // GET TASK COMMENTS
     // =========================
 
+    @Operation(
+        summary = "Get task comments",
+        description = "Returns a paginated list of comments for a task."
+    )
     @GetMapping("/tasks/{taskId}/comments")
     public ResponseEntity<Page<CommentResponse>> getTaskComments(
             Authentication authentication,
@@ -87,6 +102,10 @@ public class CommentController {
     // UPDATE COMMENT
     // =========================
 
+    @Operation(
+        summary = "Update a comment",
+        description = "Updates an existing comment."
+    )
     @PutMapping("/comments/{commentId}")
     public ResponseEntity<CommentResponse> updateComment(
             Authentication authentication,
@@ -109,6 +128,10 @@ public class CommentController {
     // DELETE COMMENT
     // =========================
 
+    @Operation(
+        summary = "Delete a comment",
+        description = "Deletes an existing comment."
+    )
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(
             Authentication authentication,

@@ -20,10 +20,17 @@ import com.yogesh.devflow.dto.request.ProjectRequest;
 import com.yogesh.devflow.dto.response.ProjectResponse;
 import com.yogesh.devflow.service.ProjectService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/projects")
+@Tag(
+    name = "Projects",
+    description = "Project management APIs"
+)
 public class ProjectController {
 
     private final ProjectService projectService;
@@ -36,6 +43,10 @@ public class ProjectController {
     // CREATE PROJECT
     // =========================
 
+    @Operation(
+        summary = "Create a project",
+        description = "Creates a new project owned by the authenticated user."
+    )
     @PostMapping
     public ResponseEntity<ProjectResponse> createProject(
             Authentication authentication,
@@ -44,7 +55,10 @@ public class ProjectController {
         String email = authentication.getName();
 
         ProjectResponse response =
-                projectService.createProject(email, request);
+                projectService.createProject(
+                        email,
+                        request
+                );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -55,6 +69,10 @@ public class ProjectController {
     // GET MY PROJECTS
     // =========================
 
+    @Operation(
+        summary = "Get my projects",
+        description = "Returns a paginated list of projects owned by the authenticated user."
+    )
     @GetMapping
     public ResponseEntity<Page<ProjectResponse>> getMyProjects(
             Authentication authentication,
@@ -69,7 +87,8 @@ public class ProjectController {
         Page<ProjectResponse> response =
                 projectService.getMyProjects(
                         email,
-                        pageable);
+                        pageable
+                );
 
         return ResponseEntity.ok(response);
     }
@@ -78,6 +97,10 @@ public class ProjectController {
     // GET PROJECT BY ID
     // =========================
 
+    @Operation(
+        summary = "Get project by ID",
+        description = "Returns a project owned by the authenticated user."
+    )
     @GetMapping("/{projectId}")
     public ResponseEntity<ProjectResponse> getProjectById(
             Authentication authentication,
@@ -88,7 +111,8 @@ public class ProjectController {
         ProjectResponse response =
                 projectService.getProjectById(
                         email,
-                        projectId);
+                        projectId
+                );
 
         return ResponseEntity.ok(response);
     }
@@ -97,6 +121,10 @@ public class ProjectController {
     // UPDATE PROJECT
     // =========================
 
+    @Operation(
+        summary = "Update a project",
+        description = "Updates the name and description of a project owned by the authenticated user."
+    )
     @PutMapping("/{projectId}")
     public ResponseEntity<ProjectResponse> updateProject(
             Authentication authentication,
@@ -109,7 +137,8 @@ public class ProjectController {
                 projectService.updateProject(
                         email,
                         projectId,
-                        request);
+                        request
+                );
 
         return ResponseEntity.ok(response);
     }
@@ -118,6 +147,10 @@ public class ProjectController {
     // DELETE PROJECT
     // =========================
 
+    @Operation(
+        summary = "Delete a project",
+        description = "Deletes a project owned by the authenticated user."
+    )
     @DeleteMapping("/{projectId}")
     public ResponseEntity<Void> deleteProject(
             Authentication authentication,
@@ -127,7 +160,8 @@ public class ProjectController {
 
         projectService.deleteProject(
                 email,
-                projectId);
+                projectId
+        );
 
         return ResponseEntity
                 .noContent()
