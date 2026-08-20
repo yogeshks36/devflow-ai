@@ -22,11 +22,13 @@ import com.yogesh.devflow.service.ProjectService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/projects")
+@SecurityRequirement(name = "bearerAuth")
 @Tag(
     name = "Projects",
     description = "Project management APIs"

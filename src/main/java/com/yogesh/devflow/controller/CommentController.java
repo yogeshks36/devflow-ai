@@ -20,12 +20,14 @@ import com.yogesh.devflow.dto.response.CommentResponse;
 import com.yogesh.devflow.service.CommentService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api")
+@SecurityRequirement(name = "bearerAuth")
 @Tag(
     name = "Comments",
     description = "Task comment management APIs"
