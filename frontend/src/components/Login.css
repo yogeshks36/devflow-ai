@@ -1,0 +1,133 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(124, 58, 237, 0.18),
+      transparent 35%
+    ),
+    #0f1117;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 430px;
+  padding: 40px;
+  border: 1px solid #292e39;
+  border-radius: 16px;
+  background: #171a22;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 40px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.logo-mark {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: white;
+}
+
+.login-header {
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #a855f7;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.login-header h1 {
+  margin: 0;
+  font-size: 32px;
+  color: #f5f7fb;
+}
+
+.login-header p:not(.eyebrow) {
+  margin-top: 10px;
+  color: #9ca3af;
+  line-height: 1.5;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  color: #d1d5db;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #303541;
+  border-radius: 8px;
+  outline: none;
+  background: #10131a;
+  color: #f5f7fb;
+  font-size: 14px;
+}
+
+.form-group input::placeholder {
+  color: #6b7280;
+}
+
+.form-group input:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.login-button {
+  margin-top: 4px;
+  padding: 13px;
+  border: none;
+  border-radius: 8px;
+  background: #7c3aed;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    opacity 0.2s;
+}
+
+.login-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.login-footer {
+  margin: 28px 0 0;
+  color: #6b7280;
+  font-size: 12px;
+  text-align: center;
+}

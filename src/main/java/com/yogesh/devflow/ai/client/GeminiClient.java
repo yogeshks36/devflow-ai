@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.HttpStatusCodeException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -102,7 +103,14 @@ public class GeminiClient {
 
             return extractTextFromGeminiEnvelope(response);
 
-        } catch (Exception e) {
+        }catch (HttpStatusCodeException e) {
+
+            throw new AiServiceException(
+                "Gemini API temporarily unavailable. Please try again later.",
+                e
+            );
+
+        }catch (Exception e) {
 
             throw new AiServiceException(
                     "AI provider request failed",
