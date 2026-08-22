@@ -1,82 +1,167 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import './App.css'
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  Link,
+} from 'react-router-dom'
 
 import Login from './components/Login'
 import ProtectedRoute from './components/ProtectedRoute'
-import { AuthProvider } from './context/AuthContext'
+
+import './App.css'
 
 function Dashboard() {
+
+  const userData =
+    localStorage.getItem('devflow_user')
+
+  const user = userData
+    ? JSON.parse(userData)
+    : null
+
   return (
     <div className="app">
+
       <header className="navbar">
+
         <div className="logo">
-          <span className="logo-mark">D</span>
-          <span>DevFlow AI</span>
+
+          <span className="logo-mark">
+            D
+          </span>
+
+          <span>
+            DevFlow AI
+          </span>
+
         </div>
 
         <nav>
-          <a href="#dashboard">Dashboard</a>
-          <a href="#projects">Projects</a>
-          <a href="#tasks">Tasks</a>
-          <a href="#team">Team</a>
+
+          <Link to="/dashboard">
+            Dashboard
+          </Link>
+
+          <Link to="/projects">
+            Projects
+          </Link>
+
+          <Link to="/tasks">
+            Tasks
+          </Link>
+
+          <Link to="/team">
+            Team
+          </Link>
+
         </nav>
 
         <div className="profile">
-          <div className="avatar">Y</div>
-          <span>Yogesh</span>
+
+          <div className="avatar">
+            Y
+          </div>
+
+          <span>
+            {user?.email || 'Yogesh'}
+          </span>
+
         </div>
+
       </header>
 
       <main className="main">
 
         <section className="welcome">
-          <div>
-            <p className="eyebrow">DEVFLOW AI</p>
 
-            <h1>Welcome back, Yogesh 👋</h1>
+          <div>
+
+            <p className="eyebrow">
+              DEVFLOW AI
+            </p>
+
+            <h1>
+              Welcome back, Yogesh 👋
+            </h1>
 
             <p className="subtitle">
-              Manage your projects, tasks and development workflow in one place.
+              Manage your projects, tasks and
+              development workflow in one place.
             </p>
+
           </div>
 
           <button className="primary-button">
             + New Project
           </button>
+
         </section>
 
         <section className="stats">
 
           <div className="stat-card">
-            <span className="stat-label">Projects</span>
-            <strong>0</strong>
+
+            <span className="stat-label">
+              Projects
+            </span>
+
+            <strong>
+              0
+            </strong>
+
             <span className="stat-description">
               Active projects
             </span>
+
           </div>
 
           <div className="stat-card">
-            <span className="stat-label">Tasks</span>
-            <strong>0</strong>
+
+            <span className="stat-label">
+              Tasks
+            </span>
+
+            <strong>
+              0
+            </strong>
+
             <span className="stat-description">
               Tasks assigned
             </span>
+
           </div>
 
           <div className="stat-card">
-            <span className="stat-label">Completed</span>
-            <strong>0</strong>
+
+            <span className="stat-label">
+              Completed
+            </span>
+
+            <strong>
+              0
+            </strong>
+
             <span className="stat-description">
               Tasks completed
             </span>
+
           </div>
 
           <div className="stat-card">
-            <span className="stat-label">Team members</span>
-            <strong>0</strong>
+
+            <span className="stat-label">
+              Team members
+            </span>
+
+            <strong>
+              0
+            </strong>
+
             <span className="stat-description">
               People collaborating
             </span>
+
           </div>
 
         </section>
@@ -86,14 +171,23 @@ function Dashboard() {
           <div className="panel">
 
             <div className="panel-header">
+
               <div>
-                <h2>Projects</h2>
-                <p>Your recent projects</p>
+
+                <h2>
+                  Projects
+                </h2>
+
+                <p>
+                  Your recent projects
+                </p>
+
               </div>
 
               <button className="secondary-button">
                 View all
               </button>
+
             </div>
 
             <div className="empty-state">
@@ -102,11 +196,13 @@ function Dashboard() {
                 📁
               </div>
 
-              <h3>No projects yet</h3>
+              <h3>
+                No projects yet
+              </h3>
 
               <p>
-                Create your first project to start managing your
-                development workflow.
+                Create your first project to start
+                managing your development workflow.
               </p>
 
               <button className="primary-button">
@@ -120,14 +216,23 @@ function Dashboard() {
           <div className="panel">
 
             <div className="panel-header">
+
               <div>
-                <h2>Recent Tasks</h2>
-                <p>Your latest tasks</p>
+
+                <h2>
+                  Recent Tasks
+                </h2>
+
+                <p>
+                  Your latest tasks
+                </p>
+
               </div>
 
               <button className="secondary-button">
                 View all
               </button>
+
             </div>
 
             <div className="empty-state">
@@ -136,10 +241,13 @@ function Dashboard() {
                 ✓
               </div>
 
-              <h3>No tasks yet</h3>
+              <h3>
+                No tasks yet
+              </h3>
 
               <p>
-                Tasks from your projects will appear here.
+                Tasks from your projects will
+                appear here.
               </p>
 
             </div>
@@ -165,8 +273,8 @@ function Dashboard() {
             </h2>
 
             <p>
-              DevFlow AI can analyze a task and generate smaller,
-              actionable subtasks.
+              DevFlow AI can analyze a task and
+              generate smaller, actionable subtasks.
             </p>
 
           </div>
@@ -178,55 +286,72 @@ function Dashboard() {
         </section>
 
       </main>
+
     </div>
   )
 }
 
 function App() {
+
   return (
-    <AuthProvider>
-      <BrowserRouter>
 
-        <Routes>
+    <BrowserRouter>
 
-          <Route
-            path="/login"
-            element={<Login />}
-          />
+      <Routes>
 
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
+        {/* =========================
+            LOGIN
+        ========================= */}
 
-          <Route
-            path="/"
-            element={
-              <Navigate
-                to="/dashboard"
-                replace
-              />
-            }
-          />
+        <Route
+          path="/login"
+          element={<Login />}
+        />
 
-          <Route
-            path="*"
-            element={
-              <Navigate
-                to="/dashboard"
-                replace
-              />
-            }
-          />
+        {/* =========================
+            DASHBOARD
+        ========================= */}
 
-        </Routes>
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
-      </BrowserRouter>
-    </AuthProvider>
+        {/* =========================
+            DEFAULT
+        ========================= */}
+
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to="/dashboard"
+              replace
+            />
+          }
+        />
+
+        {/* =========================
+            UNKNOWN ROUTES
+        ========================= */}
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/dashboard"
+              replace
+            />
+          }
+        />
+
+      </Routes>
+
+    </BrowserRouter>
   )
 }
 

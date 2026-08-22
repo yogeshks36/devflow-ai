@@ -1,10 +1,11 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useState,
+  type ReactNode,
 } from 'react'
-import type { ReactNode } from 'react'
+
+const TOKEN_KEY = 'devflow_token'
 
 interface AuthContextType {
   token: string | null
@@ -17,40 +18,53 @@ const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 )
 
-export const AuthProvider = ({
-  children,
-}: {
+interface AuthProviderProps {
   children: ReactNode
-}) => {
+}
+
+export function AuthProvider({
+  children,
+}: AuthProviderProps) {
+
   const [token, setToken] = useState<string | null>(
-    localStorage.getItem('devflow_token')
+    () => localStorage.getItem(TOKEN_KEY)
   )
 
   const loginUser = (newToken: string) => {
-    localStorage.setItem('devflow_token', newToken)
+
+    localStorage.setItem(
+      TOKEN_KEY,
+      newToken
+    )
+
     setToken(newToken)
   }
 
   const logout = () => {
-    localStorage.removeItem('devflow_token')
+
+    localStorage.removeItem(
+      TOKEN_KEY
+    )
+
     setToken(null)
   }
 
+  const value: AuthContextType = {
+    token,
+    isAuthenticated: !!token,
+    loginUser,
+    logout,
+  }
+
   return (
-    <AuthContext.Provider
-      value={{
-        token,
-        isAuthenticated: !!token,
-        loginUser,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )
 }
 
-export const useAuth = () => {
+export function useAuth() {
+
   const context = useContext(AuthContext)
 
   if (!context) {
