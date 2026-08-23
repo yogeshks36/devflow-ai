@@ -450,3 +450,102 @@ a {
 .login-button:hover {
   background: #6d28d9;
 }
+/* Modal */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  width: min(500px, calc(100% - 40px));
+
+  padding: 28px;
+
+  border: 1px solid #303541;
+  border-radius: 14px;
+
+  background: #171a22;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  margin-bottom: 24px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.modal-header p {
+  margin: 7px 0 0;
+
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.modal-close {
+  width: 34px;
+  height: 34px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #222633;
+  color: #d1d5db;
+
+  font-size: 24px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  background: #303541;
+}
+
+.modal textarea {
+  width: 100%;
+
+  resize: vertical;
+
+  padding: 12px;
+
+  border: 1px solid #303541;
+  border-radius: 8px;
+
+  background: #0f1117;
+  color: #f5f7fb;
+
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.modal textarea:focus,
+.modal input:focus {
+  outline: none;
+  border-color: #7c3aed;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 24px;
+}

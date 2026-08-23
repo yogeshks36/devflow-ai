@@ -7,7 +7,7 @@ export interface Project {
 }
 
 export const getProjects = async (): Promise<Project[]> => {
-  const response = await api.get<Project[]>('/api/projects')
+  const response = await api.get<Project[]>('/projects')
 
   return response.data
 }

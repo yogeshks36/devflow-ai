@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   BrowserRouter,
   Routes,
@@ -7,21 +8,23 @@ import {
 } from 'react-router-dom'
 
 import Login from './components/Login'
-import ProtectedRoute from './components/ProtectedRoute'
+import CreateProject from './components/CreateProject'
+import Projects from './components/Projects'
 
 import './App.css'
 
 function Dashboard() {
+  const [showCreateProject, setShowCreateProject] =
+    useState(false)
 
-  const userData =
-    localStorage.getItem('devflow_user')
-
-  const user = userData
-    ? JSON.parse(userData)
-    : null
+  const [projectCount, setProjectCount] = useState(0)
 
   return (
     <div className="app">
+
+      {/* =========================
+          NAVBAR
+      ========================= */}
 
       <header className="navbar">
 
@@ -36,6 +39,7 @@ function Dashboard() {
           </span>
 
         </div>
+
 
         <nav>
 
@@ -57,6 +61,7 @@ function Dashboard() {
 
         </nav>
 
+
         <div className="profile">
 
           <div className="avatar">
@@ -64,14 +69,23 @@ function Dashboard() {
           </div>
 
           <span>
-            {user?.email || 'Yogesh'}
+            Yogesh
           </span>
 
         </div>
 
       </header>
 
+
+      {/* =========================
+          MAIN
+      ========================= */}
+
       <main className="main">
+
+        {/* =========================
+            WELCOME
+        ========================= */}
 
         <section className="welcome">
 
@@ -92,11 +106,22 @@ function Dashboard() {
 
           </div>
 
-          <button className="primary-button">
+
+          <button
+            className="primary-button"
+            onClick={() =>
+              setShowCreateProject(true)
+            }
+          >
             + New Project
           </button>
 
         </section>
+
+
+        {/* =========================
+            STATS
+        ========================= */}
 
         <section className="stats">
 
@@ -107,7 +132,7 @@ function Dashboard() {
             </span>
 
             <strong>
-              0
+              {projectCount}
             </strong>
 
             <span className="stat-description">
@@ -115,6 +140,7 @@ function Dashboard() {
             </span>
 
           </div>
+
 
           <div className="stat-card">
 
@@ -132,6 +158,7 @@ function Dashboard() {
 
           </div>
 
+
           <div className="stat-card">
 
             <span className="stat-label">
@@ -147,6 +174,7 @@ function Dashboard() {
             </span>
 
           </div>
+
 
           <div className="stat-card">
 
@@ -166,7 +194,14 @@ function Dashboard() {
 
         </section>
 
+
+        {/* =========================
+            CONTENT GRID
+        ========================= */}
+
         <section className="content-grid">
+
+          {/* PROJECTS */}
 
           <div className="panel">
 
@@ -184,11 +219,16 @@ function Dashboard() {
 
               </div>
 
-              <button className="secondary-button">
+
+              <Link
+                to="/projects"
+                className="secondary-button"
+              >
                 View all
-              </button>
+              </Link>
 
             </div>
+
 
             <div className="empty-state">
 
@@ -196,22 +236,54 @@ function Dashboard() {
                 📁
               </div>
 
-              <h3>
-                No projects yet
-              </h3>
 
-              <p>
-                Create your first project to start
-                managing your development workflow.
-              </p>
+              {projectCount === 0 ? (
 
-              <button className="primary-button">
-                Create Project
+                <>
+                  <h3>
+                    No projects yet
+                  </h3>
+
+                  <p>
+                    Create your first project to
+                    start managing your development
+                    workflow.
+                  </p>
+                </>
+
+              ) : (
+
+                <>
+                  <h3>
+                    {projectCount} project
+                    {projectCount !== 1 ? 's' : ''} created
+                  </h3>
+
+                  <p>
+                    Your projects are ready to manage.
+                  </p>
+                </>
+
+              )}
+
+
+              <button
+                className="primary-button"
+                onClick={() =>
+                  setShowCreateProject(true)
+                }
+              >
+                {projectCount === 0
+                  ? 'Create Project'
+                  : 'Create Another Project'}
               </button>
 
             </div>
 
           </div>
+
+
+          {/* TASKS */}
 
           <div className="panel">
 
@@ -229,11 +301,16 @@ function Dashboard() {
 
               </div>
 
-              <button className="secondary-button">
+
+              <Link
+                to="/tasks"
+                className="secondary-button"
+              >
                 View all
-              </button>
+              </Link>
 
             </div>
+
 
             <div className="empty-state">
 
@@ -246,8 +323,8 @@ function Dashboard() {
               </h3>
 
               <p>
-                Tasks from your projects will
-                appear here.
+                Tasks from your projects
+                will appear here.
               </p>
 
             </div>
@@ -256,11 +333,17 @@ function Dashboard() {
 
         </section>
 
+
+        {/* =========================
+            AI PANEL
+        ========================= */}
+
         <section className="ai-panel">
 
           <div className="ai-icon">
             ✦
           </div>
+
 
           <div>
 
@@ -269,17 +352,23 @@ function Dashboard() {
             </p>
 
             <h2>
-              Let AI help you break down your tasks
+              Let AI help you break down
+              your tasks
             </h2>
 
             <p>
-              DevFlow AI can analyze a task and
-              generate smaller, actionable subtasks.
+              DevFlow AI can analyze a task
+              and generate smaller,
+              actionable subtasks.
             </p>
 
           </div>
 
-          <button className="secondary-button">
+
+          <button
+            className="secondary-button"
+            type="button"
+          >
             Try AI
           </button>
 
@@ -287,9 +376,45 @@ function Dashboard() {
 
       </main>
 
+
+      {/* =========================
+          CREATE PROJECT MODAL
+      ========================= */}
+
+      {showCreateProject && (
+
+        <CreateProject
+
+          onClose={() =>
+            setShowCreateProject(false)
+          }
+
+          onCreated={() => {
+
+            console.log(
+              'Project created successfully'
+            )
+
+            setProjectCount(
+              previous => previous + 1
+            )
+
+            setShowCreateProject(false)
+
+          }}
+
+        />
+
+      )}
+
     </div>
   )
 }
+
+
+/* =========================
+    APP
+========================= */
 
 function App() {
 
@@ -299,31 +424,93 @@ function App() {
 
       <Routes>
 
-        {/* =========================
-            LOGIN
-        ========================= */}
+        {/* LOGIN */}
 
         <Route
           path="/login"
           element={<Login />}
         />
 
-        {/* =========================
-            DASHBOARD
-        ========================= */}
+
+        {/* DASHBOARD */}
 
         <Route
           path="/dashboard"
+          element={<Dashboard />}
+        />
+
+
+        {/* PROJECTS */}
+
+        <Route
+          path="/projects"
+          element={<Projects />}
+        />
+
+
+        {/* TASKS */}
+
+        <Route
+          path="/tasks"
           element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
+            <div className="app">
+
+              <main className="main">
+
+                <h1>
+                  Tasks
+                </h1>
+
+                <p className="subtitle">
+                  Task management will be added next.
+                </p>
+
+                <Link
+                  to="/dashboard"
+                  className="secondary-button"
+                >
+                  ← Back to Dashboard
+                </Link>
+
+              </main>
+
+            </div>
           }
         />
 
-        {/* =========================
-            DEFAULT
-        ========================= */}
+
+        {/* TEAM */}
+
+        <Route
+          path="/team"
+          element={
+            <div className="app">
+
+              <main className="main">
+
+                <h1>
+                  Team
+                </h1>
+
+                <p className="subtitle">
+                  Team management will be added next.
+                </p>
+
+                <Link
+                  to="/dashboard"
+                  className="secondary-button"
+                >
+                  ← Back to Dashboard
+                </Link>
+
+              </main>
+
+            </div>
+          }
+        />
+
+
+        {/* ROOT */}
 
         <Route
           path="/"
@@ -335,9 +522,8 @@ function App() {
           }
         />
 
-        {/* =========================
-            UNKNOWN ROUTES
-        ========================= */}
+
+        {/* UNKNOWN ROUTES */}
 
         <Route
           path="*"
@@ -352,6 +538,7 @@ function App() {
       </Routes>
 
     </BrowserRouter>
+
   )
 }
 
