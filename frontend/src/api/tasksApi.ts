@@ -1,0 +1,45 @@
+import api from './axios'
+
+export interface Task {
+  id: number
+  title: string
+  description: string
+  status: string
+  priority: string
+  dueDate: string | null
+  assignee: {
+    id: number
+    firstName: string
+    lastName: string
+    email: string
+  } | null
+}
+
+export interface TaskPage {
+  content: Task[]
+  totalPages: number
+  totalElements: number
+  number: number
+  size: number
+  first: boolean
+  last: boolean
+}
+
+export const getProjectTasks = async (
+  projectId: number,
+  page: number = 0,
+  size: number = 10
+): Promise<TaskPage> => {
+
+  const response = await api.get<TaskPage>(
+    `/projects/${projectId}/tasks`,
+    {
+      params: {
+        page,
+        size,
+      },
+    }
+  )
+
+  return response.data
+}

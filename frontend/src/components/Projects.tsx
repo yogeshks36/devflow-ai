@@ -1,49 +1,81 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { getProjects } from '../api/projectsApi'
+import { useNavigate } from 'react-router-dom'
 
-interface Project {
-  id: number
-  name: string
-  description: string
-}
+import {
+  getProjects,
+  type Project,
+} from '../api/projectsApi'
+import './Projects.css'
 
 function Projects() {
+
+  const navigate = useNavigate()
+
   const [projects, setProjects] = useState<Project[]>([])
+
   const [loading, setLoading] = useState(true)
+
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        setLoading(true)
-        setError('')
+  const [page, setPage] = useState(0)
 
-        const data = await getProjects()
+  const [totalPages, setTotalPages] = useState(0)
 
-        console.log('PROJECTS FROM BACKEND:', data)
+  const loadProjects = async () => {
 
-        setProjects(data)
-      } catch (error) {
-        console.error('GET PROJECTS ERROR:', error)
+    try {
 
-        setError('Failed to load projects')
-      } finally {
-        setLoading(false)
-      }
+      setLoading(true)
+
+      setError('')
+
+      const response = await getProjects(page, 10)
+
+      console.log(
+        'PROJECTS FROM BACKEND:',
+        response
+      )
+
+      setProjects(response.content)
+
+      setTotalPages(response.totalPages)
+
+    } catch (error) {
+
+      console.error(
+        'LOAD PROJECTS ERROR:',
+        error
+      )
+
+      setError(
+        'Failed to load projects'
+      )
+
+    } finally {
+
+      setLoading(false)
+
     }
+  }
+
+  useEffect(() => {
 
     loadProjects()
-  }, [])
+
+  }, [page])
 
   return (
-    <div className="app">
 
-      {/* NAVBAR */}
+    <div className="projects-page">
+
+      {/* =========================
+          HEADER
+      ========================= */}
 
       <header className="navbar">
 
         <div className="logo">
+
           <span className="logo-mark">
             D
           </span>
@@ -51,27 +83,50 @@ function Projects() {
           <span>
             DevFlow AI
           </span>
+
         </div>
+
 
         <nav>
 
-          <Link to="/dashboard">
+          <button
+            className="nav-link"
+            onClick={() =>
+              navigate('/dashboard')
+            }
+          >
             Dashboard
-          </Link>
+          </button>
 
-          <Link to="/projects">
+          <button
+            className="nav-link active"
+            onClick={() =>
+              navigate('/projects')
+            }
+          >
             Projects
-          </Link>
+          </button>
 
-          <Link to="/tasks">
+          <button
+            className="nav-link"
+            onClick={() =>
+              navigate('/tasks')
+            }
+          >
             Tasks
-          </Link>
+          </button>
 
-          <Link to="/team">
+          <button
+            className="nav-link"
+            onClick={() =>
+              navigate('/team')
+            }
+          >
             Team
-          </Link>
+          </button>
 
         </nav>
+
 
         <div className="profile">
 
@@ -88,11 +143,13 @@ function Projects() {
       </header>
 
 
-      {/* MAIN */}
+      {/* =========================
+          MAIN
+      ========================= */}
 
       <main className="main">
 
-        <section className="welcome">
+        <section className="projects-header">
 
           <div>
 
@@ -105,139 +162,225 @@ function Projects() {
             </h1>
 
             <p className="subtitle">
-              Manage all your development projects in one place.
+              Manage all your development
+              projects in one place.
             </p>
 
           </div>
 
-          <Link
-            to="/dashboard"
-            className="secondary-button"
-          >
-            ← Back to Dashboard
-          </Link>
+
+          <div className="header-actions">
+
+            <button
+              className="secondary-button"
+              onClick={() =>
+                navigate('/dashboard')
+              }
+            >
+              ← Back to Dashboard
+            </button>
+
+          </div>
 
         </section>
 
 
-        {/* LOADING */}
+        {/* =========================
+            LOADING
+        ========================= */}
 
         {loading && (
 
-          <div className="panel">
+          <div className="projects-message">
 
-            <div className="empty-state">
-
-              <h3>
-                Loading projects...
-              </h3>
-
-              <p>
-                Fetching your projects from DevFlow AI.
-              </p>
-
+            <div className="empty-icon">
+              ⏳
             </div>
+
+            <h2>
+              Loading projects...
+            </h2>
 
           </div>
 
         )}
 
 
-        {/* ERROR */}
+        {/* =========================
+            ERROR
+        ========================= */}
 
         {!loading && error && (
 
-          <div className="panel">
+          <div className="projects-message error">
 
-            <div className="empty-state">
-
-              <h3>
-                Unable to load projects
-              </h3>
-
-              <p>
-                {error}
-              </p>
-
+            <div className="empty-icon">
+              ⚠️
             </div>
+
+            <h2>
+              {error}
+            </h2>
+
+            <button
+              className="primary-button"
+              onClick={loadProjects}
+            >
+              Try Again
+            </button>
 
           </div>
 
         )}
 
 
-        {/* NO PROJECTS */}
+        {/* =========================
+            NO PROJECTS
+        ========================= */}
 
         {!loading &&
           !error &&
           projects.length === 0 && (
 
-            <div className="panel">
+            <div className="projects-message">
 
-              <div className="empty-state">
-
-                <div className="empty-icon">
-                  📁
-                </div>
-
-                <h3>
-                  No projects yet
-                </h3>
-
-                <p>
-                  You haven't created any projects yet.
-                </p>
-
-                <Link
-                  to="/dashboard"
-                  className="primary-button"
-                >
-                  Create Project
-                </Link>
-
+              <div className="empty-icon">
+                📁
               </div>
+
+              <h2>
+                No projects yet
+              </h2>
+
+              <p>
+                Create your first project
+                to get started.
+              </p>
+
+              <button
+                className="primary-button"
+                onClick={() =>
+                  navigate('/dashboard')
+                }
+              >
+                Create Project
+              </button>
 
             </div>
 
           )}
 
 
-        {/* PROJECT LIST */}
+        {/* =========================
+            PROJECT GRID
+        ========================= */}
 
         {!loading &&
           !error &&
           projects.length > 0 && (
 
-            <section className="content-grid">
+            <>
 
-              {projects.map((project) => (
+              <section className="projects-grid">
 
-                <div
-                  className="panel"
-                  key={project.id}
-                >
+                {projects.map((project) => (
 
-                  <div className="empty-icon">
-                    📁
+                  <div
+                    className="project-card"
+                    key={project.id}
+                  >
+
+                    <div className="project-card-top">
+
+                      <div className="project-icon">
+                        📁
+                      </div>
+
+                      <span className="project-id">
+                        #{project.id}
+                      </span>
+
+                    </div>
+
+
+                    <h2>
+                      {project.name}
+                    </h2>
+
+
+                    <p>
+                      {project.description ||
+                        'No description provided.'}
+                    </p>
+
+
+                    <div className="project-card-footer">
+
+                      <button
+                        className="secondary-button"
+                        onClick={() =>
+                           navigate(`/projects/${project.id}`)
+                        }
+                      >
+                        Open Project
+                      </button>
+
+                    </div>
+
                   </div>
 
-                  <h2>
-                    {project.name}
-                  </h2>
+                ))}
 
-                  <p className="subtitle">
-                    {project.description || 'No description provided.'}
-                  </p>
+              </section>
 
-                  <p>
-                    Project ID: {project.id}
-                  </p>
+
+              {/* =========================
+                  PAGINATION
+              ========================= */}
+
+              {totalPages > 1 && (
+
+                <div className="pagination">
+
+                  <button
+                    className="secondary-button"
+                    disabled={page === 0}
+                    onClick={() =>
+                      setPage(
+                        previous =>
+                          previous - 1
+                      )
+                    }
+                  >
+                    ← Previous
+                  </button>
+
+
+                  <span>
+                    Page {page + 1} of {totalPages}
+                  </span>
+
+
+                  <button
+                    className="secondary-button"
+                    disabled={
+                      page >= totalPages - 1
+                    }
+                    onClick={() =>
+                      setPage(
+                        previous =>
+                          previous + 1
+                      )
+                    }
+                  >
+                    Next →
+                  </button>
 
                 </div>
 
-              ))}
+              )}
 
-            </section>
+            </>
 
           )}
 

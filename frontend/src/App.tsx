@@ -1,25 +1,72 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { getProjects, type Project } from './api/projectsApi'
 import {
   BrowserRouter,
   Routes,
   Route,
   Navigate,
+  useNavigate,
   Link,
 } from 'react-router-dom'
 
 import Login from './components/Login'
 import CreateProject from './components/CreateProject'
 import Projects from './components/Projects'
-
+import ProjectDetails from './components/ProjectDetails'
 import './App.css'
 
 function Dashboard() {
+
+  const navigate = useNavigate()
+
   const [showCreateProject, setShowCreateProject] =
     useState(false)
 
-  const [projectCount, setProjectCount] = useState(0)
+  const [projects, setProjects] =
+    useState<Project[]>([])
+
+  const [loadingProjects, setLoadingProjects] =
+    useState(true)
+
+  const loadProjects = async () => {
+
+    try {
+
+      setLoadingProjects(true)
+
+      const response = await getProjects(0, 10)
+
+      console.log(
+        'DASHBOARD PROJECTS:',
+        response
+      )
+
+      setProjects(response.content)
+
+    } catch (error) {
+
+      console.error(
+        'DASHBOARD PROJECTS ERROR:',
+        error
+      )
+
+    } finally {
+
+      setLoadingProjects(false)
+
+    }
+  }
+
+
+  useEffect(() => {
+
+    loadProjects()
+
+  }, [])
+
 
   return (
+
     <div className="app">
 
       {/* =========================
@@ -43,21 +90,41 @@ function Dashboard() {
 
         <nav>
 
-          <Link to="/dashboard">
+          <button
+            className="nav-link active"
+            onClick={() =>
+              navigate('/dashboard')
+            }
+          >
             Dashboard
-          </Link>
+          </button>
 
-          <Link to="/projects">
+          <button
+            className="nav-link"
+            onClick={() =>
+              navigate('/projects')
+            }
+          >
             Projects
-          </Link>
+          </button>
 
-          <Link to="/tasks">
+          <button
+            className="nav-link"
+            onClick={() =>
+              navigate('/tasks')
+            }
+          >
             Tasks
-          </Link>
+          </button>
 
-          <Link to="/team">
+          <button
+            className="nav-link"
+            onClick={() =>
+              navigate('/team')
+            }
+          >
             Team
-          </Link>
+          </button>
 
         </nav>
 
@@ -132,7 +199,9 @@ function Dashboard() {
             </span>
 
             <strong>
-              {projectCount}
+              {loadingProjects
+                ? '...'
+                : projects.length}
             </strong>
 
             <span className="stat-description">
@@ -201,7 +270,10 @@ function Dashboard() {
 
         <section className="content-grid">
 
-          {/* PROJECTS */}
+
+          {/* =========================
+              PROJECTS
+          ========================= */}
 
           <div className="panel">
 
@@ -220,26 +292,48 @@ function Dashboard() {
               </div>
 
 
-              <Link
-                to="/projects"
+              <button
                 className="secondary-button"
+                onClick={() =>
+                  navigate('/projects')
+                }
               >
                 View all
-              </Link>
+              </button>
 
             </div>
 
 
-            <div className="empty-state">
+            {/* LOADING */}
 
-              <div className="empty-icon">
-                📁
+            {loadingProjects && (
+
+              <div className="empty-state">
+
+                <div className="empty-icon">
+                  ⏳
+                </div>
+
+                <h3>
+                  Loading projects...
+                </h3>
+
               </div>
 
+            )}
 
-              {projectCount === 0 ? (
 
-                <>
+            {/* NO PROJECTS */}
+
+            {!loadingProjects &&
+              projects.length === 0 && (
+
+                <div className="empty-state">
+
+                  <div className="empty-icon">
+                    📁
+                  </div>
+
                   <h3>
                     No projects yet
                   </h3>
@@ -249,41 +343,95 @@ function Dashboard() {
                     start managing your development
                     workflow.
                   </p>
-                </>
 
-              ) : (
+                  <button
+                    className="primary-button"
+                    onClick={() =>
+                      setShowCreateProject(true)
+                    }
+                  >
+                    Create Project
+                  </button>
 
-                <>
-                  <h3>
-                    {projectCount} project
-                    {projectCount !== 1 ? 's' : ''} created
-                  </h3>
-
-                  <p>
-                    Your projects are ready to manage.
-                  </p>
-                </>
+                </div>
 
               )}
 
 
-              <button
-                className="primary-button"
-                onClick={() =>
-                  setShowCreateProject(true)
-                }
-              >
-                {projectCount === 0
-                  ? 'Create Project'
-                  : 'Create Another Project'}
-              </button>
+            {/* PROJECTS EXIST */}
 
-            </div>
+            {!loadingProjects &&
+              projects.length > 0 && (
+
+                <div className="dashboard-projects">
+
+                  {projects
+                    .slice(0, 3)
+                    .map((project) => (
+
+                      <div
+                        className="dashboard-project"
+                        key={project.id}
+                      >
+
+                        <div className="dashboard-project-icon">
+                          📁
+                        </div>
+
+
+                        <div className="dashboard-project-info">
+
+                          <h3>
+                            {project.name}
+                          </h3>
+
+                          <p>
+                            {project.description ||
+                              'No description provided.'}
+                          </p>
+
+                        </div>
+
+
+                        <button
+                          className="secondary-button"
+                          onClick={() =>
+                            navigate(
+                              `/projects/${project.id}`
+                            )
+                          }
+                        >
+                          Open
+                        </button>
+
+                      </div>
+
+                    ))}
+
+
+                  {projects.length > 3 && (
+
+                    <button
+                      className="secondary-button"
+                      onClick={() =>
+                        navigate('/projects')
+                      }
+                    >
+                      View all {projects.length} projects
+                    </button>
+
+                  )}
+
+                </div>
+
+              )}
 
           </div>
 
 
-          {/* TASKS */}
+          {/* =========================
+              TASKS
+          ========================= */}
 
           <div className="panel">
 
@@ -302,12 +450,12 @@ function Dashboard() {
               </div>
 
 
-              <Link
-                to="/tasks"
+              <button
                 className="secondary-button"
+                type="button"
               >
                 View all
-              </Link>
+              </button>
 
             </div>
 
@@ -343,7 +491,6 @@ function Dashboard() {
           <div className="ai-icon">
             ✦
           </div>
-
 
           <div>
 
@@ -385,9 +532,11 @@ function Dashboard() {
 
         <CreateProject
 
-          onClose={() =>
+          onClose={() => {
+
             setShowCreateProject(false)
-          }
+
+          }}
 
           onCreated={() => {
 
@@ -395,11 +544,9 @@ function Dashboard() {
               'Project created successfully'
             )
 
-            setProjectCount(
-              previous => previous + 1
-            )
-
             setShowCreateProject(false)
+
+            loadProjects()
 
           }}
 
@@ -408,6 +555,7 @@ function Dashboard() {
       )}
 
     </div>
+
   )
 }
 
@@ -445,6 +593,11 @@ function App() {
         <Route
           path="/projects"
           element={<Projects />}
+        />
+
+        <Route
+          path="/projects/:id"
+          element={<ProjectDetails />}
         />
 
 

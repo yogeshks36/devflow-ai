@@ -549,3 +549,31 @@ a {
 
   margin-top: 24px;
 }
+.dashboard-projects {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.dashboard-project {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px;
+  border: 1px solid #2a2f3d;
+  border-radius: 14px;
+  background: #151821;
+}
+
+.dashboard-project h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.dashboard-project p {
+  margin: 0;
+  color: #8f9bb3;
+  font-size: 14px;
+}
