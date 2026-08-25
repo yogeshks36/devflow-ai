@@ -1,0 +1,182 @@
+.project-details-page {
+  min-height: 100vh;
+  background: #0d0e14;
+  color: #f5f5f7;
+}
+
+.project-details-page .main {
+  width: min(1200px, 92%);
+  margin: 0 auto;
+  padding: 70px 0;
+}
+
+.project-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-bottom: 55px;
+}
+
+.project-details-header h1 {
+  margin: 10px 0;
+  font-size: 64px;
+  line-height: 1.05;
+}
+
+.project-details-header .subtitle {
+  color: #91a0b8;
+  font-size: 20px;
+  margin: 0;
+}
+
+.eyebrow {
+  color: #a855f7;
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-size: 14px;
+  margin: 0;
+}
+
+.secondary-button,
+.primary-button {
+  border: 1px solid #303545;
+  border-radius: 12px;
+  padding: 14px 22px;
+  font-size: 16px;
+  cursor: pointer;
+  color: #f5f5f7;
+  background: #191c25;
+}
+
+.primary-button {
+  background: #7c3aed;
+  border-color: #7c3aed;
+}
+
+.secondary-button:hover {
+  border-color: #8b5cf6;
+}
+
+.primary-button:hover {
+  background: #6d28d9;
+}
+
+.tasks-section {
+  background: #171a22;
+  border: 1px solid #292e3b;
+  border-radius: 20px;
+  padding: 35px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.section-header h2 {
+  margin: 8px 0 0;
+  font-size: 32px;
+}
+
+.tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.task-card {
+  background: #11131a;
+  border: 1px solid #2c3140;
+  border-radius: 16px;
+  padding: 25px;
+}
+
+.task-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.task-id {
+  color: #8290a8;
+}
+
+.task-status {
+  background: #242938;
+  color: #a78bfa;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.task-card h3 {
+  font-size: 24px;
+  margin: 0 0 12px;
+}
+
+.task-card p {
+  color: #91a0b8;
+  line-height: 1.6;
+  margin-bottom: 25px;
+}
+
+.task-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  color: #8290a8;
+  font-size: 14px;
+}
+
+.projects-message {
+  text-align: center;
+  padding: 70px 20px;
+}
+
+.projects-message .empty-icon {
+  font-size: 45px;
+  margin-bottom: 15px;
+}
+
+.projects-message h2 {
+  margin-bottom: 10px;
+}
+
+.projects-message p {
+  color: #91a0b8;
+  margin-bottom: 25px;
+}
+
+.projects-message.error h2 {
+  color: #ff6b6b;
+}
+
+@media (max-width: 800px) {
+
+  .project-details-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .project-details-header h1 {
+    font-size: 46px;
+  }
+
+  .tasks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .task-card-bottom {
+    flex-direction: column;
+  }
+}

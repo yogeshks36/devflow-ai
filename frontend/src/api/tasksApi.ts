@@ -25,6 +25,15 @@ export interface TaskPage {
   last: boolean
 }
 
+export interface CreateTaskRequest {
+  title: string
+  description: string
+  status?: string
+  priority?: string
+  dueDate?: string | null
+  assigneeId?: number | null
+}
+
 export const getProjectTasks = async (
   projectId: number,
   page: number = 0,
@@ -39,6 +48,19 @@ export const getProjectTasks = async (
         size,
       },
     }
+  )
+
+  return response.data
+}
+
+export const createTask = async (
+  projectId: number,
+  data: CreateTaskRequest
+): Promise<Task> => {
+
+  const response = await api.post<Task>(
+    `/projects/${projectId}/tasks`,
+    data
   )
 
   return response.data

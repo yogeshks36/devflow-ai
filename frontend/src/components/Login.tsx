@@ -51,14 +51,27 @@ function Login() {
         response
       )
 
-      /*
-       * Save JWT in AuthContext
-       */
+      console.log(
+        'TOKEN FROM LOGIN:',
+        response.token
+      )
+
+      // Make sure backend actually returned a token
+      if (!response.token) {
+        throw new Error(
+          'Login response does not contain a token'
+        )
+      }
+
+      // Save JWT
       loginUser(response.token)
 
-      /*
-       * Redirect to dashboard
-       */
+      console.log(
+        'TOKEN AFTER loginUser:',
+        localStorage.getItem('devflow_token')
+      )
+
+      // Redirect
       navigate('/', {
         replace: true,
       })

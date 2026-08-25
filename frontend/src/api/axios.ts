@@ -12,28 +12,68 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+
     const token = localStorage.getItem('devflow_token')
 
+    console.log(
+      'AXIOS REQUEST:',
+      config.method?.toUpperCase(),
+      config.url
+    )
+
+    console.log(
+      'TOKEN FROM LOCAL STORAGE:',
+      token
+    )
+
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+
+      config.headers.Authorization =
+        `Bearer ${token}`
+
+      console.log(
+        'AUTHORIZATION HEADER SET'
+      )
+
+    } else {
+
+      console.log(
+        'NO TOKEN FOUND'
+      )
     }
 
     return config
   },
+
   (error) => {
     return Promise.reject(error)
   }
 )
 
 api.interceptors.response.use(
+
   (response) => {
+
+    console.log(
+      'API SUCCESS:',
+      response.config.url,
+      response.status
+    )
+
     return response
   },
+
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('devflow_token')
-      localStorage.removeItem('devflow_user')
-    }
+
+    console.error(
+      'API ERROR:',
+      error.response?.status,
+      error.response?.data
+    )
+
+    // IMPORTANT:
+    // Do NOT remove the token automatically yet.
+    // We are debugging authentication.
 
     return Promise.reject(error)
   }

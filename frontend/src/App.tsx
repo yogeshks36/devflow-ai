@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getProjects, type Project } from './api/projectsApi'
+import { getProjectTasks, type Task } from './api/tasksApi'
 import {
   BrowserRouter,
   Routes,
@@ -13,6 +14,8 @@ import Login from './components/Login'
 import CreateProject from './components/CreateProject'
 import Projects from './components/Projects'
 import ProjectDetails from './components/ProjectDetails'
+import { AuthProvider } from './context/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 
 function Dashboard() {
@@ -27,35 +30,106 @@ function Dashboard() {
 
   const [loadingProjects, setLoadingProjects] =
     useState(true)
+  
+  const [taskCount, setTaskCount] = useState(0)
+
+  const [recentTasks, setRecentTasks] = useState<Task[]>([])
 
   const loadProjects = async () => {
 
-    try {
+  try {
 
-      setLoadingProjects(true)
+    setLoadingProjects(true)
 
-      const response = await getProjects(0, 10)
+    const response = await getProjects(0, 10)
 
-      console.log(
-        'DASHBOARD PROJECTS:',
-        response
+    console.log(
+      'DASHBOARD PROJECTS:',
+      response
+    )
+
+    setProjects(response.content)
+
+    const allTasks: Task[] = []
+
+for (const project of response.content) {
+
+  try {
+
+    const taskResponse =
+      await getProjectTasks(
+        project.id,
+        0,
+        3
       )
 
-      setProjects(response.content)
+    allTasks.push(
+      ...taskResponse.content
+    )
 
-    } catch (error) {
+  } catch (error) {
 
-      console.error(
-        'DASHBOARD PROJECTS ERROR:',
-        error
-      )
+    console.error(
+      `FAILED TO LOAD TASKS FOR PROJECT ${project.id}:`,
+      error
+    )
 
-    } finally {
-
-      setLoadingProjects(false)
-
-    }
   }
+}
+
+setRecentTasks(
+  allTasks.slice(0, 5)
+)
+
+    // =========================
+    // LOAD TASK COUNT
+    // =========================
+
+    let totalTasks = 0
+
+    for (const project of response.content) {
+
+      try {
+
+        const taskResponse =
+          await getProjectTasks(
+            project.id,
+            0,
+            1
+          )
+
+        totalTasks += taskResponse.totalElements
+
+      } catch (error) {
+
+        console.error(
+          `FAILED TO LOAD TASKS FOR PROJECT ${project.id}:`,
+          error
+        )
+
+      }
+    }
+
+    console.log(
+      'TOTAL DASHBOARD TASKS:',
+      totalTasks
+    )
+
+    setTaskCount(totalTasks)
+
+  } catch (error) {
+
+    console.error(
+      'DASHBOARD PROJECTS ERROR:',
+      error
+    )
+
+  } finally {
+
+    setLoadingProjects(false)
+
+  }
+}
 
 
   useEffect(() => {
@@ -218,7 +292,7 @@ function Dashboard() {
             </span>
 
             <strong>
-              0
+               {loadingProjects ? '...' : taskCount}
             </strong>
 
             <span className="stat-description">
@@ -453,6 +527,7 @@ function Dashboard() {
               <button
                 className="secondary-button"
                 type="button"
+                onClick={() => navigate('/tasks')}
               >
                 View all
               </button>
@@ -460,22 +535,60 @@ function Dashboard() {
             </div>
 
 
-            <div className="empty-state">
+            {recentTasks.length === 0 ? (
 
-              <div className="empty-icon">
-                ✓
-              </div>
+  <div className="empty-state">
 
-              <h3>
-                No tasks yet
-              </h3>
+    <div className="empty-icon">
+      ✓
+    </div>
 
-              <p>
-                Tasks from your projects
-                will appear here.
-              </p>
+    <h3>
+      No tasks yet
+    </h3>
 
-            </div>
+    <p>
+      Tasks from your projects
+      will appear here.
+    </p>
+
+  </div>
+
+) : (
+
+  <div className="dashboard-tasks">
+
+    {recentTasks.map((task) => (
+
+      <div
+        className="dashboard-task"
+        key={task.id}
+      >
+
+        <div className="dashboard-task-info">
+
+          <h3>
+            {task.title}
+          </h3>
+
+          <p>
+            {task.description ||
+              'No description provided.'}
+          </p>
+
+        </div>
+
+        <span className="task-status">
+          {task.status}
+        </span>
+
+      </div>
+
+    ))}
+
+  </div>
+
+)}
 
           </div>
 
@@ -568,130 +681,142 @@ function App() {
 
   return (
 
-    <BrowserRouter>
+    <AuthProvider>
 
-      <Routes>
+      <BrowserRouter>
 
-        {/* LOGIN */}
+        <Routes>
 
-        <Route
-          path="/login"
-          element={<Login />}
-        />
+          {/* =========================
+              PUBLIC ROUTE
+          ========================= */}
 
-
-        {/* DASHBOARD */}
-
-        <Route
-          path="/dashboard"
-          element={<Dashboard />}
-        />
+          <Route
+            path="/login"
+            element={<Login />}
+          />
 
 
-        {/* PROJECTS */}
+          {/* =========================
+              PROTECTED ROUTES
+          ========================= */}
 
-        <Route
-          path="/projects"
-          element={<Projects />}
-        />
+          <Route element={<ProtectedRoute />}>
 
-        <Route
-          path="/projects/:id"
-          element={<ProjectDetails />}
-        />
-
-
-        {/* TASKS */}
-
-        <Route
-          path="/tasks"
-          element={
-            <div className="app">
-
-              <main className="main">
-
-                <h1>
-                  Tasks
-                </h1>
-
-                <p className="subtitle">
-                  Task management will be added next.
-                </p>
-
-                <Link
-                  to="/dashboard"
-                  className="secondary-button"
-                >
-                  ← Back to Dashboard
-                </Link>
-
-              </main>
-
-            </div>
-          }
-        />
-
-
-        {/* TEAM */}
-
-        <Route
-          path="/team"
-          element={
-            <div className="app">
-
-              <main className="main">
-
-                <h1>
-                  Team
-                </h1>
-
-                <p className="subtitle">
-                  Team management will be added next.
-                </p>
-
-                <Link
-                  to="/dashboard"
-                  className="secondary-button"
-                >
-                  ← Back to Dashboard
-                </Link>
-
-              </main>
-
-            </div>
-          }
-        />
-
-
-        {/* ROOT */}
-
-        <Route
-          path="/"
-          element={
-            <Navigate
-              to="/dashboard"
-              replace
+            <Route
+              path="/dashboard"
+              element={<Dashboard />}
             />
-          }
-        />
 
-
-        {/* UNKNOWN ROUTES */}
-
-        <Route
-          path="*"
-          element={
-            <Navigate
-              to="/dashboard"
-              replace
+            <Route
+              path="/projects"
+              element={<Projects />}
             />
-          }
-        />
 
-      </Routes>
+            <Route
+              path="/projects/:projectId"
+              element={<ProjectDetails />}
+            />
 
-    </BrowserRouter>
 
+            {/* TASKS */}
+
+            <Route
+              path="/tasks"
+              element={
+                <div className="app">
+
+                  <main className="main">
+
+                    <h1>
+                      Tasks
+                    </h1>
+
+                    <p className="subtitle">
+                      Task management will be added next.
+                    </p>
+
+                    <Link
+                      to="/dashboard"
+                      className="secondary-button"
+                    >
+                      ← Back to Dashboard
+                    </Link>
+
+                  </main>
+
+                </div>
+              }
+            />
+
+
+            {/* TEAM */}
+
+            <Route
+              path="/team"
+              element={
+                <div className="app">
+
+                  <main className="main">
+
+                    <h1>
+                      Team
+                    </h1>
+
+                    <p className="subtitle">
+                      Team management will be added next.
+                    </p>
+
+                    <Link
+                      to="/dashboard"
+                      className="secondary-button"
+                    >
+                      ← Back to Dashboard
+                    </Link>
+
+                  </main>
+
+                </div>
+              }
+            />
+
+          </Route>
+
+
+          {/* =========================
+              ROOT
+          ========================= */}
+
+          <Route
+            path="/"
+            element={
+              <Navigate
+                to="/dashboard"
+                replace
+              />
+            }
+          />
+
+
+          {/* =========================
+              UNKNOWN ROUTES
+          ========================= */}
+
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to="/dashboard"
+                replace
+              />
+            }
+          />
+
+        </Routes>
+
+      </BrowserRouter>
+
+    </AuthProvider>
   )
 }
 

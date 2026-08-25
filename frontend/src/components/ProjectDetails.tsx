@@ -1,44 +1,55 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-
+import CreateTask from './CreateTask'
 import {
   getProjectById,
   type Project,
 } from '../api/projectsApi'
 
+import {
+  getProjectTasks,
+  type Task,
+} from '../api/tasksApi'
+
+import './ProjectDetails.css'
+
 function ProjectDetails() {
 
   const navigate = useNavigate()
+  const { projectId } = useParams()
 
-  const { id } = useParams()
+  const [project, setProject] = useState<Project | null>(null)
+  const [tasks, setTasks] = useState<Task[]>([])
 
-  const [project, setProject] =
-    useState<Project | null>(null)
+  const [loadingProject, setLoadingProject] = useState(true)
+  const [loadingTasks, setLoadingTasks] = useState(true)
 
-  const [loading, setLoading] =
-    useState(true)
+  const [projectError, setProjectError] = useState('')
+  const [taskError, setTaskError] = useState('')
 
-  const [error, setError] =
-    useState('')
+  const [showCreateTask, setShowCreateTask] =
+      useState(false)
 
+  // =========================
+  // LOAD PROJECT
+  // =========================
 
   const loadProject = async () => {
 
+    if (!projectId) {
+      setProjectError('Project ID is missing')
+      setLoadingProject(false)
+      return
+    }
+
     try {
 
-      setLoading(true)
+      setLoadingProject(true)
+      setProjectError('')
 
-      setError('')
-
-      if (!id) {
-        setError('Project ID is missing')
-        return
-      }
-
-      const projectId = Number(id)
-
-      const response =
-        await getProjectById(projectId)
+      const response = await getProjectById(
+        Number(projectId)
+      )
 
       console.log(
         'PROJECT FROM BACKEND:',
@@ -54,30 +65,117 @@ function ProjectDetails() {
         error
       )
 
-      setError(
+      setProjectError(
         'Failed to load project'
       )
 
     } finally {
 
-      setLoading(false)
+      setLoadingProject(false)
 
     }
   }
 
+  // =========================
+  // LOAD TASKS
+  // =========================
+
+  const loadTasks = async () => {
+
+    if (!projectId) {
+      setTaskError('Project ID is missing')
+      setLoadingTasks(false)
+      return
+    }
+
+    try {
+
+      setLoadingTasks(true)
+      setTaskError('')
+
+      const response = await getProjectTasks(
+        Number(projectId),
+        0,
+        10
+      )
+
+      console.log(
+        'TASKS FROM BACKEND:',
+        response
+      )
+
+      setTasks(response.content)
+
+    } catch (error) {
+
+      console.error(
+        'LOAD TASKS ERROR:',
+        error
+      )
+
+      setTaskError(
+        'Failed to load tasks'
+      )
+
+    } finally {
+
+      setLoadingTasks(false)
+
+    }
+  }
+
+  // =========================
+  // INITIAL LOAD
+  // =========================
 
   useEffect(() => {
 
     loadProject()
+    loadTasks()
 
-  }, [id])
+  }, [projectId])
 
+  // =========================
+  // INVALID PROJECT ID
+  // =========================
+
+  if (!projectId) {
+
+    return (
+      <div className="project-details-page">
+
+        <main className="main">
+
+          <div className="projects-message error">
+
+            <h2>
+              Project ID is missing
+            </h2>
+
+            <button
+              className="secondary-button"
+              onClick={() =>
+                navigate('/projects')
+              }
+            >
+              ← Back to Projects
+            </button>
+
+          </div>
+
+        </main>
+
+      </div>
+    )
+  }
 
   return (
 
-    <div className="projects-page">
+    <div className="project-details-page">
 
-      {/* NAVBAR */}
+      {/* =========================
+          NAVBAR
+      ========================= */}
 
       <header className="navbar">
 
@@ -93,7 +191,6 @@ function ProjectDetails() {
 
         </div>
 
-
         <nav>
 
           <button
@@ -105,7 +202,6 @@ function ProjectDetails() {
             Dashboard
           </button>
 
-
           <button
             className="nav-link"
             onClick={() =>
@@ -115,7 +211,6 @@ function ProjectDetails() {
             Projects
           </button>
 
-
           <button
             className="nav-link"
             onClick={() =>
@@ -124,7 +219,6 @@ function ProjectDetails() {
           >
             Tasks
           </button>
-
 
           <button
             className="nav-link"
@@ -136,7 +230,6 @@ function ProjectDetails() {
           </button>
 
         </nav>
-
 
         <div className="profile">
 
@@ -153,11 +246,17 @@ function ProjectDetails() {
       </header>
 
 
-      {/* MAIN */}
+      {/* =========================
+          MAIN
+      ========================= */}
 
       <main className="main">
 
-        <section className="projects-header">
+        {/* =========================
+            PROJECT HEADER
+        ========================= */}
+
+        <section className="project-details-header">
 
           <div>
 
@@ -165,19 +264,34 @@ function ProjectDetails() {
               DEVFLOW AI
             </p>
 
-            <h1>
-              {project
-                ? project.name
-                : 'Project'}
-            </h1>
+            {loadingProject ? (
 
-            <p className="subtitle">
-              {project?.description ||
-                'Project details'}
-            </p>
+              <h1>
+                Loading project...
+              </h1>
+
+            ) : projectError ? (
+
+              <h1>
+                Project unavailable
+              </h1>
+
+            ) : (
+
+              <>
+                <h1>
+                  {project?.name}
+                </h1>
+
+                <p className="subtitle">
+                  {project?.description ||
+                    'No description provided.'}
+                </p>
+              </>
+
+            )}
 
           </div>
-
 
           <button
             className="secondary-button"
@@ -191,94 +305,233 @@ function ProjectDetails() {
         </section>
 
 
-        {/* LOADING */}
+        {/* =========================
+            PROJECT ERROR
+        ========================= */}
 
-        {loading && (
+        {!loadingProject &&
+          projectError && (
 
-          <div className="panel">
+          <div className="projects-message error">
 
-            <div className="empty-state">
-
-              <div className="empty-icon">
-                ⏳
-              </div>
-
-              <h2>
-                Loading project...
-              </h2>
-
+            <div className="empty-icon">
+              ⚠️
             </div>
+
+            <h2>
+              {projectError}
+            </h2>
+
+            <button
+              className="primary-button"
+              onClick={loadProject}
+            >
+              Try Again
+            </button>
 
           </div>
 
         )}
 
 
-        {/* ERROR */}
+        {/* =========================
+            TASKS
+        ========================= */}
 
-        {!loading && error && (
+        {!projectError && (
 
-          <div className="panel">
+          <section className="tasks-section">
 
-            <div className="empty-state">
+            <div className="section-header">
 
-              <div className="empty-icon">
-                ⚠️
+              <div>
+
+                <p className="eyebrow">
+                  PROJECT TASKS
+                </p>
+
+                <h2>
+                  Tasks
+                </h2>
+
               </div>
-
-              <h2>
-                {error}
-              </h2>
 
               <button
                 className="primary-button"
-                onClick={loadProject}
+                onClick={() =>
+                  setShowCreateTask(true)
+                }
               >
-                Try Again
+                + New Task
               </button>
 
             </div>
 
-          </div>
+            {showCreateTask && projectId && (
 
-        )}
+              <CreateTask
+
+                projectId={Number(projectId)}
+
+                onClose={() =>
+                  setShowCreateTask(false)
+                }
+
+                onCreated={() => {
+
+                  setShowCreateTask(false)
+
+                  loadTasks()
+
+                }}
+
+              />
+
+            )}
 
 
-        {/* PROJECT */}
+            {/* LOADING */}
 
-        {!loading &&
-          !error &&
-          project && (
+            {loadingTasks && (
 
-            <section className="panel">
-
-              <div className="empty-state">
+              <div className="projects-message">
 
                 <div className="empty-icon">
-                  📁
+                  ⏳
                 </div>
 
-
                 <h2>
-                  {project.name}
+                  Loading tasks...
                 </h2>
-
-
-                <p>
-                  {project.description ||
-                    'No description provided.'}
-                </p>
-
-
-                <p>
-                  Project ID: #{project.id}
-                </p>
 
               </div>
 
-            </section>
+            )}
 
-          )}
+
+            {/* TASK ERROR */}
+
+            {!loadingTasks &&
+              taskError && (
+
+              <div className="projects-message error">
+
+                <div className="empty-icon">
+                  ⚠️
+                </div>
+
+                <h2>
+                  {taskError}
+                </h2>
+
+                <button
+                  className="primary-button"
+                  onClick={loadTasks}
+                >
+                  Try Again
+                </button>
+
+              </div>
+
+            )}
+
+
+            {/* NO TASKS */}
+
+            {!loadingTasks &&
+              !taskError &&
+              tasks.length === 0 && (
+
+              <div className="projects-message">
+
+                <div className="empty-icon">
+                  ✓
+                </div>
+
+                <h2>
+                  No tasks yet
+                </h2>
+
+                <p>
+                  Create a task to start working
+                  on this project.
+                </p>
+
+                <button
+                  className="primary-button"
+                  onClick={() =>
+                    setShowCreateTask(true)
+                  }
+                >
+                  Create Task
+                </button>
+
+              </div>
+
+            )}
+
+
+            {/* TASK LIST */}
+
+            {!loadingTasks &&
+              !taskError &&
+              tasks.length > 0 && (
+
+              <div className="tasks-grid">
+
+                {tasks.map((task) => (
+
+                  <div
+                    className="task-card"
+                    key={task.id}
+                  >
+
+                    <div className="task-card-top">
+
+                      <span className="task-id">
+                        #{task.id}
+                      </span>
+
+                      <span className="task-status">
+                        {task.status}
+                      </span>
+
+                    </div>
+
+                    <h3>
+                      {task.title}
+                    </h3>
+
+                    <p>
+                      {task.description ||
+                        'No description provided.'}
+                    </p>
+
+                    <div className="task-card-bottom">
+
+                      <span>
+                        Priority: {task.priority}
+                      </span>
+
+                      <span>
+                        {task.dueDate
+                          ? `Due: ${task.dueDate}`
+                          : 'No due date'}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                ))}
+
+              </div>
+
+            )}
+
+          </section>
+
+        )}
 
       </main>
 
