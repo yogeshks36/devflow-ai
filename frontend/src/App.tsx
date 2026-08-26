@@ -17,7 +17,8 @@ import ProjectDetails from './components/ProjectDetails'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
-
+import Tasks from './pages/Tasks'
+import TaskDetails from './pages/TaskDetails'
 function Dashboard() {
 
   const navigate = useNavigate()
@@ -723,31 +724,13 @@ function App() {
 
             <Route
               path="/tasks"
-              element={
-                <div className="app">
-
-                  <main className="main">
-
-                    <h1>
-                      Tasks
-                    </h1>
-
-                    <p className="subtitle">
-                      Task management will be added next.
-                    </p>
-
-                    <Link
-                      to="/dashboard"
-                      className="secondary-button"
-                    >
-                      ← Back to Dashboard
-                    </Link>
-
-                  </main>
-
-                </div>
-              }
+              element={<Tasks />} 
             />
+
+            <Route
+    path="/tasks/:taskId"
+    element={<TaskDetails />}
+/>
 
 
             {/* TEAM */}
@@ -762,10 +745,6 @@ function App() {
                     <h1>
                       Team
                     </h1>
-
-                    <p className="subtitle">
-                      Team management will be added next.
-                    </p>
 
                     <Link
                       to="/dashboard"

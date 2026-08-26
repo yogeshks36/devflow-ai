@@ -65,3 +65,31 @@ export const createTask = async (
 
   return response.data
 }
+
+export const getAllTasks = async (
+  page: number = 0,
+  size: number = 10
+): Promise<TaskPage> => {
+
+  const response = await api.get<TaskPage>(
+    '/tasks',
+    {
+      params: {
+        page,
+        size,
+      },
+    }
+  )
+
+  return response.data
+}
+export const getTaskById = async (
+  taskId: number
+): Promise<Task> => {
+
+  const response = await api.get<Task>(
+    `/tasks/${taskId}`
+  )
+
+  return response.data
+}

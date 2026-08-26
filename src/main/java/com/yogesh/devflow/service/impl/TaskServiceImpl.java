@@ -162,6 +162,22 @@ public class TaskServiceImpl implements TaskService {
         return toTaskResponse(task);
     }
 
+    @Override
+public Page<TaskResponse> getAllTasks(
+        String email,
+        Pageable pageable) {
+
+    User owner = getUserByEmail(email);
+
+    Page<Task> tasks =
+            taskRepository.findByProjectOwner(
+                    owner,
+                    pageable
+            );
+
+    return tasks.map(this::toTaskResponse);
+}
+
     // =========================
     // UPDATE TASK
     // =========================

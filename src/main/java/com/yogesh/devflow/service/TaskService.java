@@ -1,7 +1,5 @@
 package com.yogesh.devflow.service;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -19,6 +17,11 @@ public interface TaskService {
     Page<TaskResponse> getProjectTasks(
             String email,
             Long projectId,
+            Pageable pageable
+    );
+
+    Page<TaskResponse> getAllTasks(
+            String email,
             Pageable pageable
     );
 

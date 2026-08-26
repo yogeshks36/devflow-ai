@@ -99,6 +99,34 @@ public class TaskController {
     }
 
     // =========================
+// GET ALL TASKS
+// =========================
+
+@Operation(
+    summary = "Get all tasks",
+    description = "Returns all tasks belonging to projects owned by the authenticated user."
+)
+@GetMapping("/tasks")
+public ResponseEntity<Page<TaskResponse>> getAllTasks(
+        Authentication authentication,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size) {
+
+    String email = authentication.getName();
+
+    Pageable pageable =
+            PageRequest.of(page, size);
+
+    Page<TaskResponse> response =
+            taskService.getAllTasks(
+                    email,
+                    pageable
+            );
+
+    return ResponseEntity.ok(response);
+}
+
+    // =========================
     // GET SINGLE TASK
     // =========================
 
