@@ -34,6 +34,15 @@ export interface CreateTaskRequest {
   assigneeId?: number | null
 }
 
+export interface UpdateTaskRequest {
+  title: string
+  description: string
+  status: string
+  priority: string
+  dueDate: string | null
+  assigneeId: number | null
+}
+
 export const getProjectTasks = async (
   projectId: number,
   page: number = 0,
@@ -92,4 +101,24 @@ export const getTaskById = async (
   )
 
   return response.data
+}
+export const updateTask = async (
+  taskId: number,
+  task: UpdateTaskRequest
+): Promise<Task> => {
+
+  const response = await api.put<Task>(
+    `/tasks/${taskId}`,
+    task
+  )
+
+  return response.data
+}
+export const deleteTask = async (
+  taskId: number
+): Promise<void> => {
+
+  await api.delete(
+    `/tasks/${taskId}`
+  )
 }
