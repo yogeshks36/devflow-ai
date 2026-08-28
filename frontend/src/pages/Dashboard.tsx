@@ -1,3 +1,4 @@
+import Navbar from '../components/Navbar'
 function Dashboard() {
     return (
         <div>
@@ -18,5 +19,7 @@ function Dashboard() {
         </div>
     );
 }
-
+<Navbar />
 export default Dashboard;
+
+

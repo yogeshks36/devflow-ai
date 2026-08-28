@@ -45,18 +45,29 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project project = new Project();
 
-        project.setName(request.getName());
-        project.setDescription(request.getDescription());
-        project.setOwner(owner);
+        project.setName(
+                request.getName()
+        );
+
+        project.setDescription(
+                request.getDescription()
+        );
+
+        project.setOwner(
+                owner
+        );
 
         Project savedProject =
                 projectRepository.save(project);
 
-        return toProjectResponse(savedProject);
+        return toProjectResponse(
+                savedProject
+        );
     }
 
     // =========================
     // GET MY PROJECTS
+    // OWNER + MEMBER PROJECTS
     // =========================
 
     @Override
@@ -64,10 +75,15 @@ public class ProjectServiceImpl implements ProjectService {
             String email,
             Pageable pageable) {
 
-        User owner = getUserByEmail(email);
+        User user =
+                getUserByEmail(email);
 
         return projectRepository
-                .findByOwner(owner, pageable)
+                .findDistinctByOwnerOrMembersUser(
+                        user,
+                        user,
+                        pageable
+                )
                 .map(this::toProjectResponse);
     }
 
@@ -81,31 +97,41 @@ public class ProjectServiceImpl implements ProjectService {
             String email,
             Long projectId) {
 
-        User user = getUserByEmail(email);
+        User user =
+                getUserByEmail(email);
 
         Project project =
                 projectRepository
                         .findById(projectId)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
-                                        "Project not found"));
+                                        "Project not found"
+                                )
+                        );
 
         boolean isOwner =
-                isOwner(project, user);
+                isOwner(
+                        project,
+                        user
+                );
 
         boolean isMember =
                 projectMemberRepository
                         .existsByProjectAndUser(
                                 project,
-                                user);
+                                user
+                        );
 
         if (!isOwner && !isMember) {
 
             throw new AccessDeniedException(
-                    "You are not a member of this project");
+                    "You are not a member of this project"
+            );
         }
 
-        return toProjectResponse(project);
+        return toProjectResponse(
+                project
+        );
     }
 
     // =========================
@@ -119,28 +145,42 @@ public class ProjectServiceImpl implements ProjectService {
             Long projectId,
             ProjectRequest request) {
 
-        User user = getUserByEmail(email);
+        User user =
+                getUserByEmail(email);
 
         Project project =
                 projectRepository
                         .findById(projectId)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
-                                        "Project not found"));
+                                        "Project not found"
+                                )
+                        );
 
-        if (!isOwner(project, user)) {
+        if (!isOwner(
+                project,
+                user
+        )) {
 
             throw new AccessDeniedException(
-                    "Only the project owner can update this project");
+                    "Only the project owner can update this project"
+            );
         }
 
-        project.setName(request.getName());
-        project.setDescription(request.getDescription());
+        project.setName(
+                request.getName()
+        );
+
+        project.setDescription(
+                request.getDescription()
+        );
 
         Project updatedProject =
                 projectRepository.save(project);
 
-        return toProjectResponse(updatedProject);
+        return toProjectResponse(
+                updatedProject
+        );
     }
 
     // =========================
@@ -153,22 +193,31 @@ public class ProjectServiceImpl implements ProjectService {
             String email,
             Long projectId) {
 
-        User user = getUserByEmail(email);
+        User user =
+                getUserByEmail(email);
 
         Project project =
                 projectRepository
                         .findById(projectId)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
-                                        "Project not found"));
+                                        "Project not found"
+                                )
+                        );
 
-        if (!isOwner(project, user)) {
+        if (!isOwner(
+                project,
+                user
+        )) {
 
             throw new AccessDeniedException(
-                    "Only the project owner can delete this project");
+                    "Only the project owner can delete this project"
+            );
         }
 
-        projectRepository.delete(project);
+        projectRepository.delete(
+                project
+        );
     }
 
     // =========================
@@ -182,20 +231,25 @@ public class ProjectServiceImpl implements ProjectService {
         return project.getOwner() != null
                 && project.getOwner()
                         .getId()
-                        .equals(user.getId());
+                        .equals(
+                                user.getId()
+                        );
     }
 
     // =========================
     // FIND USER BY EMAIL
     // =========================
 
-    private User getUserByEmail(String email) {
+    private User getUserByEmail(
+            String email) {
 
         return userRepository
                 .findByEmail(email)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "User not found"));
+                                "User not found"
+                        )
+                );
     }
 
     // =========================
@@ -208,24 +262,44 @@ public class ProjectServiceImpl implements ProjectService {
         ProjectResponse response =
                 new ProjectResponse();
 
-        response.setId(project.getId());
-        response.setName(project.getName());
-        response.setDescription(project.getDescription());
+        response.setId(
+                project.getId()
+        );
+
+        response.setName(
+                project.getName()
+        );
+
+        response.setDescription(
+                project.getDescription()
+        );
+
+        // =========================
+        // OWNER
+        // =========================
 
         if (project.getOwner() != null) {
 
             response.setOwnerId(
-                    project.getOwner().getId());
+                    project.getOwner().getId()
+            );
 
             response.setOwnerEmail(
-                    project.getOwner().getEmail());
+                    project.getOwner().getEmail()
+            );
         }
 
+        // =========================
+        // TIMESTAMPS
+        // =========================
+
         response.setCreatedAt(
-                project.getCreatedAt());
+                project.getCreatedAt()
+        );
 
         response.setUpdatedAt(
-                project.getUpdatedAt());
+                project.getUpdatedAt()
+        );
 
         return response;
     }

@@ -1,27 +1,44 @@
 import { useEffect, useState } from 'react'
 import { getProjects, type Project } from './api/projectsApi'
 import { getProjectTasks, type Task } from './api/tasksApi'
+import { useAuth } from './context/AuthContext'
+import Team from './components/Team'
+
 import {
   BrowserRouter,
   Routes,
   Route,
   Navigate,
   useNavigate,
-  Link,
 } from 'react-router-dom'
 
 import Login from './components/Login'
 import CreateProject from './components/CreateProject'
 import Projects from './components/Projects'
 import ProjectDetails from './components/ProjectDetails'
-import { AuthProvider } from './context/AuthContext'
-import ProtectedRoute from './components/ProtectedRoute'
-import './App.css'
 import Tasks from './pages/Tasks'
-import TaskDetails from './pages/TaskDetails'
+
+import { AuthProvider } from './context/AuthContext'
+
+import ProtectedRoute from './components/ProtectedRoute'
+
+import './App.css'
+
+
+// =========================
+// DASHBOARD
+// =========================
+
 function Dashboard() {
 
   const navigate = useNavigate()
+
+  const { logout } = useAuth()
+
+
+  // =========================
+  // STATE
+  // =========================
 
   const [showCreateProject, setShowCreateProject] =
     useState(false)
@@ -31,119 +48,149 @@ function Dashboard() {
 
   const [loadingProjects, setLoadingProjects] =
     useState(true)
-  
-  const [taskCount, setTaskCount] = useState(0)
 
-  const [recentTasks, setRecentTasks] = useState<Task[]>([])
+  const [taskCount, setTaskCount] =
+    useState(0)
 
-  const [completedTaskCount, setCompletedTaskCount] =
-  useState(0)
+  const [recentTasks, setRecentTasks] =
+    useState<Task[]>([])
+
+
+  // =========================
+  // LOAD PROJECTS
+  // =========================
 
   const loadProjects = async () => {
 
-  try {
+    try {
 
-    setLoadingProjects(true)
+      setLoadingProjects(true)
 
-    const response = await getProjects(0, 10)
-
-    console.log(
-      'DASHBOARD PROJECTS:',
-      response
-    )
-
-    setProjects(response.content)
-
-    const allTasks: Task[] = []
-
-for (const project of response.content) {
-
-  try {
-
-    const taskResponse =
-      await getProjectTasks(
-        project.id,
-        0,
-        3
-      )
-
-    allTasks.push(
-      ...taskResponse.content
-    )
-
-  } catch (error) {
-
-    console.error(
-      `FAILED TO LOAD TASKS FOR PROJECT ${project.id}:`,
-      error
-    )
-
-  }
-}
-
-setRecentTasks(
-  allTasks.slice(0, 5)
-)
-
-const completedTasks =
-  allTasks.filter(
-    (task) => task.status === 'DONE'
-  )
-
-setCompletedTaskCount(
-  completedTasks.length
-)
-
-    // =========================
-    // LOAD TASK COUNT
-    // =========================
-
-    let totalTasks = 0
-
-    for (const project of response.content) {
-
-      try {
-
-        const taskResponse =
-          await getProjectTasks(
-            project.id,
-            0,
-            1
-          )
-
-        totalTasks += taskResponse.totalElements
-
-      } catch (error) {
-
-        console.error(
-          `FAILED TO LOAD TASKS FOR PROJECT ${project.id}:`,
-          error
+      const response =
+        await getProjects(
+          0,
+          10
         )
 
+      console.log(
+        'DASHBOARD PROJECTS:',
+        response
+      )
+
+      setProjects(
+        response.content
+      )
+
+
+      // =========================
+      // LOAD RECENT TASKS
+      // =========================
+
+      const allTasks: Task[] = []
+
+      for (
+        const project
+        of response.content
+      ) {
+
+        try {
+
+          const taskResponse =
+            await getProjectTasks(
+              project.id,
+              0,
+              3
+            )
+
+          allTasks.push(
+            ...taskResponse.content
+          )
+
+        } catch (error) {
+
+          console.error(
+            `FAILED TO LOAD TASKS FOR PROJECT ${project.id}:`,
+            error
+          )
+
+        }
+
       }
+
+
+      setRecentTasks(
+        allTasks.slice(
+          0,
+          5
+        )
+      )
+
+
+      // =========================
+      // LOAD TOTAL TASK COUNT
+      // =========================
+
+      let totalTasks = 0
+
+      for (
+        const project
+        of response.content
+      ) {
+
+        try {
+
+          const taskResponse =
+            await getProjectTasks(
+              project.id,
+              0,
+              1
+            )
+
+          totalTasks +=
+            taskResponse.totalElements
+
+        } catch (error) {
+
+          console.error(
+            `FAILED TO LOAD TASKS FOR PROJECT ${project.id}:`,
+            error
+          )
+
+        }
+
+      }
+
+
+      console.log(
+        'TOTAL DASHBOARD TASKS:',
+        totalTasks
+      )
+
+      setTaskCount(
+        totalTasks
+      )
+
+    } catch (error) {
+
+      console.error(
+        'DASHBOARD PROJECTS ERROR:',
+        error
+      )
+
+    } finally {
+
+      setLoadingProjects(
+        false
+      )
+
     }
 
-    console.log(
-      'TOTAL DASHBOARD TASKS:',
-      totalTasks
-    )
-
-    setTaskCount(totalTasks)
-
-  } catch (error) {
-
-    console.error(
-      'DASHBOARD PROJECTS ERROR:',
-      error
-    )
-
-  } finally {
-
-    setLoadingProjects(false)
-
   }
-}
 
+
+  // =========================
+  // INITIAL LOAD
+  // =========================
 
   useEffect(() => {
 
@@ -156,11 +203,15 @@ setCompletedTaskCount(
 
     <div className="app">
 
+
       {/* =========================
           NAVBAR
       ========================= */}
 
       <header className="navbar">
+
+
+        {/* LOGO */}
 
         <div className="logo">
 
@@ -175,6 +226,8 @@ setCompletedTaskCount(
         </div>
 
 
+        {/* NAVIGATION */}
+
         <nav>
 
           <button
@@ -186,6 +239,7 @@ setCompletedTaskCount(
             Dashboard
           </button>
 
+
           <button
             className="nav-link"
             onClick={() =>
@@ -195,6 +249,7 @@ setCompletedTaskCount(
             Projects
           </button>
 
+
           <button
             className="nav-link"
             onClick={() =>
@@ -203,6 +258,7 @@ setCompletedTaskCount(
           >
             Tasks
           </button>
+
 
           <button
             className="nav-link"
@@ -216,6 +272,8 @@ setCompletedTaskCount(
         </nav>
 
 
+        {/* PROFILE */}
+
         <div className="profile">
 
           <div className="avatar">
@@ -225,6 +283,20 @@ setCompletedTaskCount(
           <span>
             Yogesh
           </span>
+
+          <button
+            type="button"
+            className="logout-button"
+            onClick={() => {
+
+              logout()
+
+              navigate('/login')
+
+            }}
+          >
+            Logout
+          </button>
 
         </div>
 
@@ -237,9 +309,8 @@ setCompletedTaskCount(
 
       <main className="main">
 
-        {/* =========================
-            WELCOME
-        ========================= */}
+
+        {/* WELCOME */}
 
         <section className="welcome">
 
@@ -264,7 +335,9 @@ setCompletedTaskCount(
           <button
             className="primary-button"
             onClick={() =>
-              setShowCreateProject(true)
+              setShowCreateProject(
+                true
+              )
             }
           >
             + New Project
@@ -273,11 +346,10 @@ setCompletedTaskCount(
         </section>
 
 
-        {/* =========================
-            STATS
-        ========================= */}
+        {/* STATS */}
 
         <section className="stats">
+
 
           <div className="stat-card">
 
@@ -286,9 +358,11 @@ setCompletedTaskCount(
             </span>
 
             <strong>
+
               {loadingProjects
                 ? '...'
                 : projects.length}
+
             </strong>
 
             <span className="stat-description">
@@ -305,7 +379,11 @@ setCompletedTaskCount(
             </span>
 
             <strong>
-               {loadingProjects ? '...' : taskCount}
+
+              {loadingProjects
+                ? '...'
+                : taskCount}
+
             </strong>
 
             <span className="stat-description">
@@ -322,9 +400,7 @@ setCompletedTaskCount(
             </span>
 
             <strong>
-              {loadingProjects
-    ? '...'
-    : completedTaskCount}
+              0
             </strong>
 
             <span className="stat-description">
@@ -353,16 +429,12 @@ setCompletedTaskCount(
         </section>
 
 
-        {/* =========================
-            CONTENT GRID
-        ========================= */}
+        {/* CONTENT GRID */}
 
         <section className="content-grid">
 
 
-          {/* =========================
-              PROJECTS
-          ========================= */}
+          {/* PROJECTS */}
 
           <div className="panel">
 
@@ -393,8 +465,6 @@ setCompletedTaskCount(
             </div>
 
 
-            {/* LOADING */}
-
             {loadingProjects && (
 
               <div className="empty-state">
@@ -411,8 +481,6 @@ setCompletedTaskCount(
 
             )}
 
-
-            {/* NO PROJECTS */}
 
             {!loadingProjects &&
               projects.length === 0 && (
@@ -436,7 +504,9 @@ setCompletedTaskCount(
                   <button
                     className="primary-button"
                     onClick={() =>
-                      setShowCreateProject(true)
+                      setShowCreateProject(
+                        true
+                      )
                     }
                   >
                     Create Project
@@ -447,8 +517,6 @@ setCompletedTaskCount(
               )}
 
 
-            {/* PROJECTS EXIST */}
-
             {!loadingProjects &&
               projects.length > 0 && (
 
@@ -456,46 +524,50 @@ setCompletedTaskCount(
 
                   {projects
                     .slice(0, 3)
-                    .map((project) => (
+                    .map(
+                      (project) => (
 
-                      <div
-                        className="dashboard-project"
-                        key={project.id}
-                      >
-
-                        <div className="dashboard-project-icon">
-                          📁
-                        </div>
-
-
-                        <div className="dashboard-project-info">
-
-                          <h3>
-                            {project.name}
-                          </h3>
-
-                          <p>
-                            {project.description ||
-                              'No description provided.'}
-                          </p>
-
-                        </div>
-
-
-                        <button
-                          className="secondary-button"
-                          onClick={() =>
-                            navigate(
-                              `/projects/${project.id}`
-                            )
-                          }
+                        <div
+                          className="dashboard-project"
+                          key={project.id}
                         >
-                          Open
-                        </button>
 
-                      </div>
+                          <div className="dashboard-project-icon">
+                            📁
+                          </div>
 
-                    ))}
+
+                          <div className="dashboard-project-info">
+
+                            <h3>
+                              {project.name}
+                            </h3>
+
+                            <p>
+
+                              {project.description ||
+                                'No description provided.'}
+
+                            </p>
+
+                          </div>
+
+
+                          <button
+                            className="secondary-button"
+                            onClick={() =>
+                              navigate(
+                                `/projects/${project.id}`
+                              )
+                            }
+                          >
+                            Open
+                          </button>
+
+                        </div>
+
+                      )
+                    )}
 
 
                   {projects.length > 3 && (
@@ -518,9 +590,7 @@ setCompletedTaskCount(
           </div>
 
 
-          {/* =========================
-              TASKS
-          ========================= */}
+          {/* RECENT TASKS */}
 
           <div className="panel">
 
@@ -542,7 +612,9 @@ setCompletedTaskCount(
               <button
                 className="secondary-button"
                 type="button"
-                onClick={() => navigate('/tasks')}
+                onClick={() =>
+                  navigate('/tasks')
+                }
               >
                 View all
               </button>
@@ -552,73 +624,87 @@ setCompletedTaskCount(
 
             {recentTasks.length === 0 ? (
 
-  <div className="empty-state">
+              <div className="empty-state">
 
-    <div className="empty-icon">
-      ✓
-    </div>
+                <div className="empty-icon">
+                  ✓
+                </div>
 
-    <h3>
-      No tasks yet
-    </h3>
+                <h3>
+                  No tasks yet
+                </h3>
 
-    <p>
-      Tasks from your projects
-      will appear here.
-    </p>
+                <p>
+                  Tasks from your projects
+                  will appear here.
+                </p>
 
-  </div>
+              </div>
 
-) : (
+            ) : (
 
-  <div className="dashboard-tasks">
+              <div className="dashboard-tasks">
 
-    {recentTasks.map((task) => (
+                {recentTasks.map(
+                  (task) => (
 
-      <div
-        className="dashboard-task"
-        key={task.id}
-      >
+                    <div
+                      className="dashboard-task"
+                      key={task.id}
+                      style={{
+                        cursor: 'pointer',
+                      }}
+                      onClick={() =>
+                        navigate(
+                          `/tasks/${task.id}`
+                        )
+                      }
+                    >
 
-        <div className="dashboard-task-info">
+                      <div className="dashboard-task-info">
 
-          <h3>
-            {task.title}
-          </h3>
+                        <h3>
+                          {task.title}
+                        </h3>
 
-          <p>
-            {task.description ||
-              'No description provided.'}
-          </p>
+                        <p>
 
-        </div>
+                          {task.description ||
+                            'No description provided.'}
 
-        <span className="task-status">
-          {task.status}
-        </span>
+                        </p>
 
-      </div>
+                      </div>
 
-    ))}
 
-  </div>
+                      <span className="task-status">
 
-)}
+                        {task.status}
+
+                      </span>
+
+                    </div>
+
+                  )
+                )}
+
+              </div>
+
+            )}
 
           </div>
 
         </section>
 
 
-        {/* =========================
-            AI PANEL
-        ========================= */}
+        {/* AI PANEL */}
 
         <section className="ai-panel">
 
           <div className="ai-icon">
             ✦
           </div>
+
 
           <div>
 
@@ -652,9 +738,7 @@ setCompletedTaskCount(
       </main>
 
 
-      {/* =========================
-          CREATE PROJECT MODAL
-      ========================= */}
+      {/* CREATE PROJECT MODAL */}
 
       {showCreateProject && (
 
@@ -662,7 +746,9 @@ setCompletedTaskCount(
 
           onClose={() => {
 
-            setShowCreateProject(false)
+            setShowCreateProject(
+              false
+            )
 
           }}
 
@@ -672,7 +758,9 @@ setCompletedTaskCount(
               'Project created successfully'
             )
 
-            setShowCreateProject(false)
+            setShowCreateProject(
+              false
+            )
 
             loadProjects()
 
@@ -685,12 +773,13 @@ setCompletedTaskCount(
     </div>
 
   )
+
 }
 
 
-/* =========================
-    APP
-========================= */
+// =========================
+// APP
+// =========================
 
 function App() {
 
@@ -702,35 +791,53 @@ function App() {
 
         <Routes>
 
-          {/* =========================
-              PUBLIC ROUTE
-          ========================= */}
+
+          {/* PUBLIC ROUTE */}
 
           <Route
             path="/login"
-            element={<Login />}
+            element={
+              <Login />
+            }
           />
 
 
-          {/* =========================
-              PROTECTED ROUTES
-          ========================= */}
+          {/* PROTECTED ROUTES */}
 
-          <Route element={<ProtectedRoute />}>
+          <Route
+            element={
+              <ProtectedRoute />
+            }
+          >
+
+
+            {/* DASHBOARD */}
 
             <Route
               path="/dashboard"
-              element={<Dashboard />}
+              element={
+                <Dashboard />
+              }
             />
+
+
+            {/* PROJECTS */}
 
             <Route
               path="/projects"
-              element={<Projects />}
+              element={
+                <Projects />
+              }
             />
+
+
+            {/* PROJECT DETAILS */}
 
             <Route
               path="/projects/:projectId"
-              element={<ProjectDetails />}
+              element={
+                <ProjectDetails />
+              }
             />
 
 
@@ -738,47 +845,25 @@ function App() {
 
             <Route
               path="/tasks"
-              element={<Tasks />} 
+              element={
+                <Tasks />
+              }
             />
-
-            <Route
-    path="/tasks/:taskId"
-    element={<TaskDetails />}
-/>
 
 
             {/* TEAM */}
 
             <Route
-              path="/team"
-              element={
-                <div className="app">
-
-                  <main className="main">
-
-                    <h1>
-                      Team
-                    </h1>
-
-                    <Link
-                      to="/dashboard"
-                      className="secondary-button"
-                    >
-                      ← Back to Dashboard
-                    </Link>
-
-                  </main>
-
-                </div>
-              }
-            />
+  path="/team"
+  element={
+    <Team />
+  }
+/>
 
           </Route>
 
 
-          {/* =========================
-              ROOT
-          ========================= */}
+          {/* ROOT */}
 
           <Route
             path="/"
@@ -791,9 +876,7 @@ function App() {
           />
 
 
-          {/* =========================
-              UNKNOWN ROUTES
-          ========================= */}
+          {/* UNKNOWN ROUTES */}
 
           <Route
             path="*"
@@ -810,7 +893,9 @@ function App() {
       </BrowserRouter>
 
     </AuthProvider>
+
   )
+
 }
 
 export default App

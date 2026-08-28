@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import Navbar from '../components/Navbar'
 
 import {
   getTaskById,
@@ -399,83 +400,7 @@ function TaskDetails() {
     <div className="app">
 
 
-      {/* =========================
-          NAVBAR
-      ========================= */}
-
-      <header className="navbar">
-
-
-        <div className="logo">
-
-          <span className="logo-mark">
-            D
-          </span>
-
-          <span>
-            DevFlow AI
-          </span>
-
-        </div>
-
-
-        <nav>
-
-          <button
-            className="nav-link"
-            onClick={() =>
-              navigate('/dashboard')
-            }
-          >
-            Dashboard
-          </button>
-
-
-          <button
-            className="nav-link"
-            onClick={() =>
-              navigate('/projects')
-            }
-          >
-            Projects
-          </button>
-
-
-          <button
-            className="nav-link active"
-            onClick={() =>
-              navigate('/tasks')
-            }
-          >
-            Tasks
-          </button>
-
-
-          <button
-            className="nav-link"
-            onClick={() =>
-              navigate('/team')
-            }
-          >
-            Team
-          </button>
-
-        </nav>
-
-
-        <div className="profile">
-
-          <div className="avatar">
-            Y
-          </div>
-
-          <span>
-            Yogesh
-          </span>
-
-        </div>
-
-      </header>
+      <Navbar />
 
 
       {/* =========================

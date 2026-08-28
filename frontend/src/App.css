@@ -577,3 +577,36 @@ a {
   color: #8f9bb3;
   font-size: 14px;
 }
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logout-button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.logout-button:hover {
+  opacity: 0.7;
+}
+.logout-button {
+  padding: 8px 14px;
+  border: 1px solid #3a3f52;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.logout-button:hover {
+  opacity: 0.8;
+}
