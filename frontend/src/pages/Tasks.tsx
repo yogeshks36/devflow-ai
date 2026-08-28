@@ -1,267 +1,747 @@
 import { useEffect, useState } from 'react'
-import { getAllTasks, type Task } from '../api/tasksApi'
 import { useNavigate } from 'react-router-dom'
+
+import {
+  getAllTasks,
+  type Task,
+  type TaskPage,
+} from '../api/tasksApi'
 
 function Tasks() {
 
-    const [tasks, setTasks] = useState<Task[]>([])
-    const [page, setPage] = useState(0)
+  const navigate = useNavigate()
 
-    const [totalPages, setTotalPages] = useState(0)
-    const [totalElements, setTotalElements] = useState(0)
 
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
+  // =========================
+  // STATE
+  // =========================
 
-    const pageSize = 10
-    const navigate = useNavigate()
+  const [tasks, setTasks] =
+    useState<Task[]>([])
 
-    const loadTasks = async () => {
+  const [loading, setLoading] =
+    useState(true)
 
-        try {
+  const [error, setError] =
+    useState('')
 
-            setLoading(true)
-            setError('')
+  const [page, setPage] =
+    useState(0)
 
-            const response = await getAllTasks(
-                page,
-                pageSize
-            )
+  const [taskPage, setTaskPage] =
+    useState<TaskPage | null>(null)
 
-            setTasks(response.content)
-            setTotalPages(response.totalPages)
-            setTotalElements(response.totalElements)
 
-        } catch (error) {
+  // =========================
+  // FILTERS
+  // =========================
 
-            console.error(
-                'FAILED TO LOAD TASKS:',
-                error
-            )
+  const [statusFilter, setStatusFilter] =
+    useState('')
 
-            setError(
-                'Failed to load tasks.'
-            )
+  const [priorityFilter, setPriorityFilter] =
+    useState('')
 
-        } finally {
 
-            setLoading(false)
+  // =========================
+  // LOAD TASKS
+  // =========================
 
-        }
+  const loadTasks = async () => {
+
+    try {
+
+      setLoading(true)
+
+      setError('')
+
+      const response =
+        await getAllTasks(
+          page,
+          10,
+          statusFilter || undefined,
+          priorityFilter || undefined
+        )
+
+      console.log(
+        'ALL TASKS:',
+        response
+      )
+
+      setTasks(
+        response.content
+      )
+
+      setTaskPage(
+        response
+      )
+
+    } catch (error) {
+
+      console.error(
+        'TASKS LOAD ERROR:',
+        error
+      )
+
+      setError(
+        'Failed to load tasks.'
+      )
+
+    } finally {
+
+      setLoading(false)
+
     }
-
-    useEffect(() => {
-
-        loadTasks()
-
-    }, [page])
+  }
 
 
-    return (
+  // =========================
+  // LOAD WHEN FILTER/PAGE CHANGES
+  // =========================
 
-        <div className="app">
+  useEffect(() => {
 
-            <main className="main">
+    loadTasks()
 
-                <p className="eyebrow">
-                    DEVFLOW AI
+  }, [
+    page,
+    statusFilter,
+    priorityFilter,
+  ])
+
+
+  // =========================
+  // STATUS FILTER CHANGE
+  // =========================
+
+  const handleStatusChange = (
+    value: string
+  ) => {
+
+    setPage(0)
+
+    setStatusFilter(value)
+
+  }
+
+
+  // =========================
+  // PRIORITY FILTER CHANGE
+  // =========================
+
+  const handlePriorityChange = (
+    value: string
+  ) => {
+
+    setPage(0)
+
+    setPriorityFilter(value)
+
+  }
+
+
+  return (
+
+    <div className="app">
+
+
+      {/* =========================
+          NAVBAR
+      ========================= */}
+
+      <header className="navbar">
+
+        <div className="logo">
+
+          <span className="logo-mark">
+            D
+          </span>
+
+          <span>
+            DevFlow AI
+          </span>
+
+        </div>
+
+
+        <nav>
+
+          <button
+            className="nav-link"
+            onClick={() =>
+              navigate('/dashboard')
+            }
+          >
+            Dashboard
+          </button>
+
+
+          <button
+            className="nav-link"
+            onClick={() =>
+              navigate('/projects')
+            }
+          >
+            Projects
+          </button>
+
+
+          <button
+            className="nav-link active"
+            onClick={() =>
+              navigate('/tasks')
+            }
+          >
+            Tasks
+          </button>
+
+
+          <button
+            className="nav-link"
+            onClick={() =>
+              navigate('/team')
+            }
+          >
+            Team
+          </button>
+
+        </nav>
+
+
+        <div className="profile">
+
+          <div className="avatar">
+            Y
+          </div>
+
+          <span>
+            Yogesh
+          </span>
+
+        </div>
+
+      </header>
+
+
+      {/* =========================
+          MAIN
+      ========================= */}
+
+      <main className="main">
+
+
+        {/* =========================
+            HEADER
+        ========================= */}
+
+        <section className="welcome">
+
+          <div>
+
+            <p className="eyebrow">
+              TASK MANAGEMENT
+            </p>
+
+            <h1>
+              All Tasks
+            </h1>
+
+            <p className="subtitle">
+              Manage tasks across all your projects.
+            </p>
+
+          </div>
+
+
+          <button
+            className="secondary-button"
+            onClick={() =>
+              navigate('/dashboard')
+            }
+          >
+            ← Dashboard
+          </button>
+
+        </section>
+
+
+        {/* =========================
+            FILTERS
+        ========================= */}
+
+        <section className="panel">
+
+          <div className="panel-header">
+
+            <div>
+
+              <h2>
+                Filters
+              </h2>
+
+              <p>
+                Filter tasks by status and priority
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div
+            style={{
+              display: 'flex',
+              gap: '16px',
+              flexWrap: 'wrap',
+            }}
+          >
+
+
+            {/* STATUS FILTER */}
+
+            <div>
+
+              <label
+                htmlFor="status"
+              >
+                Status
+              </label>
+
+              <select
+                id="status"
+                value={statusFilter}
+                onChange={(event) =>
+                  handleStatusChange(
+                    event.target.value
+                  )
+                }
+              >
+
+                <option value="">
+                  All Statuses
+                </option>
+
+                <option value="TODO">
+                  TODO
+                </option>
+
+                <option value="IN_PROGRESS">
+                  IN PROGRESS
+                </option>
+
+                <option value="DONE">
+                  DONE
+                </option>
+
+              </select>
+
+            </div>
+
+
+            {/* PRIORITY FILTER */}
+
+            <div>
+
+              <label
+                htmlFor="priority"
+              >
+                Priority
+              </label>
+
+              <select
+                id="priority"
+                value={priorityFilter}
+                onChange={(event) =>
+                  handlePriorityChange(
+                    event.target.value
+                  )
+                }
+              >
+
+                <option value="">
+                  All Priorities
+                </option>
+
+                <option value="LOW">
+                  LOW
+                </option>
+
+                <option value="MEDIUM">
+                  MEDIUM
+                </option>
+
+                <option value="HIGH">
+                  HIGH
+                </option>
+
+              </select>
+
+            </div>
+
+
+            {/* CLEAR FILTERS */}
+
+            {(statusFilter ||
+              priorityFilter) && (
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'end',
+                }}
+              >
+
+                <button
+                  className="secondary-button"
+                  onClick={() => {
+
+                    setStatusFilter('')
+
+                    setPriorityFilter('')
+
+                    setPage(0)
+
+                  }}
+                >
+                  Clear Filters
+                </button>
+
+              </div>
+
+            )}
+
+          </div>
+
+        </section>
+
+
+        {/* =========================
+            LOADING
+        ========================= */}
+
+        {loading && (
+
+          <section className="panel">
+
+            <div className="empty-state">
+
+              <div className="empty-icon">
+                ⏳
+              </div>
+
+              <h3>
+                Loading tasks...
+              </h3>
+
+            </div>
+
+          </section>
+
+        )}
+
+
+        {/* =========================
+            ERROR
+        ========================= */}
+
+        {!loading &&
+          error && (
+
+            <section className="panel">
+
+              <div className="empty-state">
+
+                <div className="empty-icon">
+                  ⚠️
+                </div>
+
+                <h3>
+                  {error}
+                </h3>
+
+
+                <button
+                  className="primary-button"
+                  onClick={
+                    loadTasks
+                  }
+                >
+                  Try Again
+                </button>
+
+              </div>
+
+            </section>
+
+          )}
+
+
+        {/* =========================
+            EMPTY STATE
+        ========================= */}
+
+        {!loading &&
+          !error &&
+          tasks.length === 0 && (
+
+            <section className="panel">
+
+              <div className="empty-state">
+
+                <div className="empty-icon">
+                  ✓
+                </div>
+
+                <h3>
+                  No tasks found
+                </h3>
+
+                <p>
+                  No tasks match your current filters.
                 </p>
 
-                <h1>
+              </div>
+
+            </section>
+
+          )}
+
+
+        {/* =========================
+            TASK LIST
+        ========================= */}
+
+        {!loading &&
+          !error &&
+          tasks.length > 0 && (
+
+            <section className="panel">
+
+
+              <div className="panel-header">
+
+                <div>
+
+                  <h2>
                     Tasks
-                </h1>
+                  </h2>
 
-                <p className="subtitle">
-                    Manage all tasks across your projects.
-                </p>
+                  <p>
+                    {taskPage?.totalElements ?? 0}
+                    {' '}
+                    task(s) found
+                  </p>
+
+                </div>
+
+              </div>
 
 
-                <div className="panel">
+              <div
+                className="dashboard-tasks"
+              >
 
-                    <div className="panel-header">
+                {tasks.map((task) => (
 
-                        <div>
+                  <div
+                    className="dashboard-task"
+                    key={task.id}
+                    onClick={() =>
+                      navigate(
+                        `/tasks/${task.id}`
+                      )
+                    }
+                    style={{
+                      cursor: 'pointer',
+                    }}
+                  >
 
-                            <h2>
-                                All Tasks
-                            </h2>
 
-                            <p>
-                                {totalElements} tasks total
-                            </p>
+                    {/* TASK INFO */}
 
-                        </div>
+                    <div
+                      className="dashboard-task-info"
+                    >
+
+                      <h3>
+                        {task.title}
+                      </h3>
+
+
+                      <p>
+
+                        {task.description ||
+                          'No description provided.'}
+
+                      </p>
+
+
+                      {/* ASSIGNEE */}
+
+                      {task.assignee && (
+
+                        <p
+                          style={{
+                            marginTop: '8px',
+                            fontSize: '13px',
+                          }}
+                        >
+
+                          Assigned to:{' '}
+
+                          {task.assignee.firstName}{' '}
+
+                          {task.assignee.lastName}
+
+                        </p>
+
+                      )}
 
                     </div>
 
 
-                    {/* LOADING */}
+                    {/* TASK META */}
 
-                    {loading && (
-
-                        <div className="empty-state">
-
-                            <h3>
-                                Loading tasks...
-                            </h3>
-
-                        </div>
-
-                    )}
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        alignItems: 'flex-end',
+                      }}
+                    >
 
 
-                    {/* ERROR */}
+                      {/* STATUS */}
 
-                    {!loading && error && (
-
-                        <div className="empty-state">
-
-                            <h3>
-                                {error}
-                            </h3>
-
-                        </div>
-
-                    )}
+                      <span
+                        className="task-status"
+                      >
+                        {task.status}
+                      </span>
 
 
-                    {/* NO TASKS */}
+                      {/* PRIORITY */}
 
-                    {!loading &&
-                        !error &&
-                        tasks.length === 0 && (
-
-                            <div className="empty-state">
-
-                                <div className="empty-icon">
-                                    ✓
-                                </div>
-
-                                <h3>
-                                    No tasks yet
-                                </h3>
-
-                                <p>
-                                    Create a task inside a project
-                                    to see it here.
-                                </p>
-
-                            </div>
-
-                        )}
+                      <span
+                        className="task-priority"
+                      >
+                        {task.priority}
+                      </span>
 
 
-                    {/* TASK LIST */}
+                      {/* DUE DATE */}
 
-                    {!loading &&
-                        !error &&
-                        tasks.length > 0 && (
+                      {task.dueDate && (
 
-                            <div className="dashboard-tasks">
+                        <span
+                          style={{
+                            fontSize: '12px',
+                          }}
+                        >
 
-                                {tasks.map((task) => (
+                          Due:{' '}
 
-                                    <div
-                                        className="dashboard-task"
-                                        key={task.id}
-                                        onClick={() =>
-            navigate(`/tasks/${task.id}`)
-        }
-        style={{
-            cursor: 'pointer'
-        }}
-                                    >
+                          {new Date(
+                            task.dueDate
+                          ).toLocaleDateString()}
 
-                                        <div className="dashboard-task-info">
+                        </span>
 
-                                            <h3>
-                                                {task.title}
-                                            </h3>
+                      )}
 
-                                            <p>
-                                                {task.description ||
-                                                    'No description provided.'}
-                                            </p>
+                    </div>
 
-                                        </div>
+                  </div>
+
+                ))}
+
+              </div>
+
+            </section>
+
+          )}
 
 
-                                        <div>
+        {/* =========================
+            PAGINATION
+        ========================= */}
 
-                                            <span className="task-status">
-                                                {task.status}
-                                            </span>
+        {!loading &&
+          !error &&
+          taskPage &&
+          taskPage.totalPages > 1 && (
 
-                                            <span className="task-status">
-                                                {task.priority}
-                                            </span>
-
-                                        </div>
-
-                                    </div>
-
-                                ))}
-
-                            </div>
-
-                        )}
-
-
-                    {/* PAGINATION */}
-
-                    {!loading &&
-                        !error &&
-                        totalPages > 1 && (
-
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    gap: '16px',
-                                    marginTop: '24px'
-                                }}
-                            >
-
-                                <button
-                                    className="secondary-button"
-                                    disabled={page === 0}
-                                    onClick={() =>
-                                        setPage(page - 1)
-                                    }
-                                >
-                                    ← Previous
-                                </button>
+            <section
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '16px',
+                marginTop: '24px',
+              }}
+            >
 
 
-                                <span>
-                                    Page {page + 1} of {totalPages}
-                                </span>
+              {/* PREVIOUS */}
+
+              <button
+                className="secondary-button"
+                disabled={
+                  taskPage.first
+                }
+                onClick={() =>
+                  setPage(
+                    page - 1
+                  )
+                }
+              >
+                ← Previous
+              </button>
 
 
-                                <button
-                                    className="secondary-button"
-                                    disabled={
-                                        page === totalPages - 1
-                                    }
-                                    onClick={() =>
-                                        setPage(page + 1)
-                                    }
-                                >
-                                    Next →
-                                </button>
+              {/* PAGE INFO */}
 
-                            </div>
+              <span>
 
-                        )}
+                Page{' '}
 
-                </div>
+                {taskPage.number + 1}
 
-            </main>
+                {' '}of{' '}
 
-        </div>
+                {taskPage.totalPages}
 
-    )
+              </span>
+
+
+              {/* NEXT */}
+
+              <button
+                className="secondary-button"
+                disabled={
+                  taskPage.last
+                }
+                onClick={() =>
+                  setPage(
+                    page + 1
+                  )
+                }
+              >
+                Next →
+              </button>
+
+            </section>
+
+          )}
+
+
+      </main>
+
+    </div>
+
+  )
+
 }
 
 export default Tasks

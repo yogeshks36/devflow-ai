@@ -162,22 +162,60 @@ public class TaskServiceImpl implements TaskService {
         return toTaskResponse(task);
     }
 
-    @Override
+   @Override
 public Page<TaskResponse> getAllTasks(
         String email,
+        TaskStatus status,
+        TaskPriority priority,
         Pageable pageable) {
 
     User owner = getUserByEmail(email);
 
-    Page<Task> tasks =
-            taskRepository.findByProjectOwner(
-                    owner,
-                    pageable
-            );
+    Page<Task> tasks;
+
+    if (status != null && priority != null) {
+
+        tasks =
+                taskRepository
+                        .findByProjectOwnerAndStatusAndPriority(
+                                owner,
+                                status,
+                                priority,
+                                pageable
+                        );
+
+    } else if (status != null) {
+
+        tasks =
+                taskRepository
+                        .findByProjectOwnerAndStatus(
+                                owner,
+                                status,
+                                pageable
+                        );
+
+    } else if (priority != null) {
+
+        tasks =
+                taskRepository
+                        .findByProjectOwnerAndPriority(
+                                owner,
+                                priority,
+                                pageable
+                        );
+
+    } else {
+
+        tasks =
+                taskRepository
+                        .findByProjectOwner(
+                                owner,
+                                pageable
+                        );
+    }
 
     return tasks.map(this::toTaskResponse);
 }
-
     // =========================
     // UPDATE TASK
     // =========================

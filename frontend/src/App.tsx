@@ -36,6 +36,9 @@ function Dashboard() {
 
   const [recentTasks, setRecentTasks] = useState<Task[]>([])
 
+  const [completedTaskCount, setCompletedTaskCount] =
+  useState(0)
+
   const loadProjects = async () => {
 
   try {
@@ -80,6 +83,15 @@ for (const project of response.content) {
 
 setRecentTasks(
   allTasks.slice(0, 5)
+)
+
+const completedTasks =
+  allTasks.filter(
+    (task) => task.status === 'DONE'
+  )
+
+setCompletedTaskCount(
+  completedTasks.length
 )
 
     // =========================
@@ -310,7 +322,9 @@ setRecentTasks(
             </span>
 
             <strong>
-              0
+              {loadingProjects
+    ? '...'
+    : completedTaskCount}
             </strong>
 
             <span className="stat-description">

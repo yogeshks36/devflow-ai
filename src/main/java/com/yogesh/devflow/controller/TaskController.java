@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yogesh.devflow.dto.request.TaskRequest;
 import com.yogesh.devflow.dto.response.TaskResponse;
 import com.yogesh.devflow.service.TaskService;
+import com.yogesh.devflow.entity.TaskPriority;
+import com.yogesh.devflow.entity.TaskStatus;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -98,19 +100,21 @@ public class TaskController {
         return ResponseEntity.ok(response);
     }
 
-    // =========================
+// =========================
 // GET ALL TASKS
 // =========================
 
 @Operation(
-    summary = "Get all tasks",
-    description = "Returns all tasks belonging to projects owned by the authenticated user."
+        summary = "Get all tasks",
+        description = "Returns a paginated list of tasks from projects owned by the authenticated user."
 )
 @GetMapping("/tasks")
 public ResponseEntity<Page<TaskResponse>> getAllTasks(
         Authentication authentication,
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size) {
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(required = false) TaskStatus status,
+        @RequestParam(required = false) TaskPriority priority) {
 
     String email = authentication.getName();
 
@@ -120,6 +124,8 @@ public ResponseEntity<Page<TaskResponse>> getAllTasks(
     Page<TaskResponse> response =
             taskService.getAllTasks(
                     email,
+                    status,
+                    priority,
                     pageable
             );
 

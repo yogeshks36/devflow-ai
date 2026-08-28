@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 
 import com.yogesh.devflow.dto.request.TaskRequest;
 import com.yogesh.devflow.dto.response.TaskResponse;
+import com.yogesh.devflow.entity.TaskPriority;
+import com.yogesh.devflow.entity.TaskStatus;
 
 public interface TaskService {
 
@@ -22,6 +24,8 @@ public interface TaskService {
 
     Page<TaskResponse> getAllTasks(
             String email,
+            TaskStatus status,
+        TaskPriority priority,
             Pageable pageable
     );
 

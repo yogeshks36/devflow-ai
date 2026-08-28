@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.yogesh.devflow.entity.Project;
 import com.yogesh.devflow.entity.Task;
 import com.yogesh.devflow.entity.User;
+import com.yogesh.devflow.entity.TaskPriority;
+import com.yogesh.devflow.entity.TaskStatus;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
@@ -19,4 +21,22 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             User owner,
             Pageable pageable
     );
+    Page<Task> findByProjectOwnerAndStatus(
+        User owner,
+        TaskStatus status,
+        Pageable pageable
+);
+
+Page<Task> findByProjectOwnerAndPriority(
+        User owner,
+        TaskPriority priority,
+        Pageable pageable
+);
+
+Page<Task> findByProjectOwnerAndStatusAndPriority(
+        User owner,
+        TaskStatus status,
+        TaskPriority priority,
+        Pageable pageable
+);
 }

@@ -77,7 +77,9 @@ export const createTask = async (
 
 export const getAllTasks = async (
   page: number = 0,
-  size: number = 10
+  size: number = 10,
+  status?: string,
+  priority?: string
 ): Promise<TaskPage> => {
 
   const response = await api.get<TaskPage>(
@@ -86,6 +88,8 @@ export const getAllTasks = async (
       params: {
         page,
         size,
+        ...(status ? { status } : {}),
+        ...(priority ? { priority } : {}),
       },
     }
   )
