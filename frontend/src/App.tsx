@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { getProjects, type Project } from './api/projectsApi'
 import { getProjectTasks, type Task } from './api/tasksApi'
 import { useAuth } from './context/AuthContext'
-import Team from './components/Team'
+
 
 import {
   BrowserRouter,
@@ -10,6 +10,7 @@ import {
   Route,
   Navigate,
   useNavigate,
+  Link,
 } from 'react-router-dom'
 
 import Login from './components/Login'
@@ -17,7 +18,7 @@ import CreateProject from './components/CreateProject'
 import Projects from './components/Projects'
 import ProjectDetails from './components/ProjectDetails'
 import Tasks from './pages/Tasks'
-
+import TaskDetails from './pages/TaskDetails'
 import { AuthProvider } from './context/AuthContext'
 
 import ProtectedRoute from './components/ProtectedRoute'
@@ -850,17 +851,45 @@ function App() {
               }
             />
 
+            {/* TASK DETAILS */}
 
-            {/* TEAM */}
-
-            <Route
-  path="/team"
+<Route
+  path="/tasks/:taskId"
   element={
-    <Team />
+    <TaskDetails />
   }
 />
 
-          </Route>
+
+            {/* TEAM */}
+
+             <Route
+    path="/team"
+    element={
+      <div className="app">
+        <main className="main">
+
+          <h1>
+            Team
+          </h1>
+
+          <p className="subtitle">
+            Team management will be added next.
+          </p>
+
+          <Link
+            to="/dashboard"
+            className="secondary-button"
+          >
+            ← Back to Dashboard
+          </Link>
+
+        </main>
+      </div>
+    }
+  />
+
+</Route>
 
 
           {/* ROOT */}
