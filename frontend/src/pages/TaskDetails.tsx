@@ -1,22 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+
 import Navbar from '../components/Navbar'
-import { useAuth } from '../context/AuthContext'
+
 import {
   getTaskById,
   updateTask,
   deleteTask,
   type Task,
-  type UpdateTaskRequest
+  type UpdateTaskRequest,
 } from '../api/tasksApi'
 
-import {
-  getTaskComments,
-  createComment,
-  updateComment,
-  deleteComment,
-  type Comment
-} from '../api/commentsApi'
+import TaskComments from '../components/TaskComments'
 
 
 function TaskDetails() {
@@ -24,22 +19,6 @@ function TaskDetails() {
   const { taskId } = useParams()
 
   const navigate = useNavigate()
-
-  const { userEmail } = useAuth()
-
-  const isCommentOwner = (
-  comment: Comment
-) => {
-
-  if (!userEmail) {
-    return false
-  }
-
-  return (
-    comment.userEmail.toLowerCase() ===
-    userEmail.toLowerCase()
-  )
-}
 
 
   // =========================
@@ -91,43 +70,6 @@ function TaskDetails() {
 
 
   // =========================
-  // COMMENTS STATE
-  // =========================
-
-  const [comments, setComments] =
-    useState<Comment[]>([])
-
-  const [loadingComments, setLoadingComments] =
-    useState(false)
-
-  const [commentError, setCommentError] =
-    useState('')
-
-  const [newComment, setNewComment] =
-    useState('')
-
-  const [creatingComment, setCreatingComment] =
-    useState(false)
-
-
-  // =========================
-  // COMMENT EDIT STATE
-  // =========================
-
-  const [editingCommentId, setEditingCommentId] =
-    useState<number | null>(null)
-
-  const [editingCommentContent, setEditingCommentContent] =
-    useState('')
-
-  const [savingComment, setSavingComment] =
-    useState(false)
-
-  const [deletingCommentId, setDeletingCommentId] =
-    useState<number | null>(null)
-
-
-  // =========================
   // LOAD TASK
   // =========================
 
@@ -144,7 +86,6 @@ function TaskDetails() {
         setLoading(false)
 
         return
-
       }
 
 
@@ -159,6 +100,12 @@ function TaskDetails() {
           await getTaskById(
             Number(taskId)
           )
+
+
+        console.log(
+          'TASK DETAILS:',
+          response
+        )
 
 
         setTask(response)
@@ -190,69 +137,7 @@ function TaskDetails() {
 
 
   // =========================
-  // LOAD COMMENTS
-  // =========================
-
-  const loadComments = async () => {
-
-    if (!taskId) {
-      return
-    }
-
-
-    try {
-
-      setLoadingComments(true)
-
-      setCommentError('')
-
-
-      const response =
-        await getTaskComments(
-          Number(taskId),
-          0,
-          50
-        )
-
-
-      setComments(
-        response.content
-      )
-
-
-    } catch (error) {
-
-      console.error(
-        'FAILED TO LOAD COMMENTS:',
-        error
-      )
-
-      setCommentError(
-        'Failed to load comments.'
-      )
-
-    } finally {
-
-      setLoadingComments(false)
-
-    }
-
-  }
-
-
-  // =========================
-  // INITIAL COMMENTS LOAD
-  // =========================
-
-  useEffect(() => {
-
-    loadComments()
-
-  }, [taskId])
-
-
-  // =========================
-  // START EDITING TASK
+  // START EDITING
   // =========================
 
   const handleEdit = () => {
@@ -262,19 +147,30 @@ function TaskDetails() {
     }
 
 
-    setTitle(task.title)
+    setTitle(
+      task.title
+    )
+
 
     setDescription(
       task.description || ''
     )
 
-    setStatus(task.status)
 
-    setPriority(task.priority)
+    setStatus(
+      task.status
+    )
+
+
+    setPriority(
+      task.priority
+    )
+
 
     setDueDate(
       task.dueDate || ''
     )
+
 
     setEditing(true)
 
@@ -282,7 +178,7 @@ function TaskDetails() {
 
 
   // =========================
-  // CANCEL TASK EDIT
+  // CANCEL EDITING
   // =========================
 
   const handleCancelEdit = () => {
@@ -325,10 +221,13 @@ function TaskDetails() {
             ? null
             : dueDate,
 
+
+        // Preserve current assignee
+
         assigneeId:
           task.assignee
             ? task.assignee.id
-            : null
+            : null,
 
       }
 
@@ -340,7 +239,10 @@ function TaskDetails() {
         )
 
 
-      setTask(updatedTask)
+      setTask(
+        updatedTask
+      )
+
 
       setEditing(false)
 
@@ -351,6 +253,7 @@ function TaskDetails() {
         'FAILED TO UPDATE TASK:',
         error
       )
+
 
       setError(
         'Failed to update task.'
@@ -397,7 +300,9 @@ function TaskDetails() {
       )
 
 
-      navigate('/tasks')
+      navigate(
+        '/tasks'
+      )
 
 
     } catch (error) {
@@ -406,6 +311,7 @@ function TaskDetails() {
         'FAILED TO DELETE TASK:',
         error
       )
+
 
       setError(
         'Failed to delete task.'
@@ -421,236 +327,6 @@ function TaskDetails() {
 
 
   // =========================
-  // CREATE COMMENT
-  // =========================
-
-  const handleCreateComment = async () => {
-
-    if (!taskId) {
-      return
-    }
-
-
-    if (
-      newComment.trim() === ''
-    ) {
-      return
-    }
-
-
-    try {
-
-      setCreatingComment(true)
-
-      setCommentError('')
-
-
-      const createdComment =
-        await createComment(
-          Number(taskId),
-          {
-            content:
-              newComment.trim()
-          }
-        )
-
-
-      setComments(
-        (previousComments) => [
-          ...previousComments,
-          createdComment
-        ]
-      )
-
-
-      setNewComment('')
-
-
-    } catch (error) {
-
-      console.error(
-        'FAILED TO CREATE COMMENT:',
-        error
-      )
-
-      setCommentError(
-        'Failed to create comment.'
-      )
-
-    } finally {
-
-      setCreatingComment(false)
-
-    }
-
-  }
-
-
-  // =========================
-  // START COMMENT EDIT
-  // =========================
-
-  const handleStartEditComment = (
-    comment: Comment
-  ) => {
-
-    setEditingCommentId(
-      comment.id
-    )
-
-    setEditingCommentContent(
-      comment.content
-    )
-
-  }
-
-
-  // =========================
-  // CANCEL COMMENT EDIT
-  // =========================
-
-  const handleCancelEditComment = () => {
-
-    setEditingCommentId(null)
-
-    setEditingCommentContent('')
-
-  }
-
-
-  // =========================
-  // SAVE COMMENT
-  // =========================
-
-  const handleSaveComment = async (
-    commentId: number
-  ) => {
-
-    if (
-      editingCommentContent.trim() === ''
-    ) {
-      return
-    }
-
-
-    try {
-
-      setSavingComment(true)
-
-      setCommentError('')
-
-
-      const updatedComment =
-        await updateComment(
-          commentId,
-          {
-            content:
-              editingCommentContent.trim()
-          }
-        )
-
-
-      setComments(
-        (previousComments) =>
-          previousComments.map(
-            (comment) =>
-
-              comment.id === commentId
-                ? updatedComment
-                : comment
-
-          )
-      )
-
-
-      setEditingCommentId(null)
-
-      setEditingCommentContent('')
-
-
-    } catch (error) {
-
-      console.error(
-        'FAILED TO UPDATE COMMENT:',
-        error
-      )
-
-      setCommentError(
-        'Failed to update comment.'
-      )
-
-    } finally {
-
-      setSavingComment(false)
-
-    }
-
-  }
-
-
-  // =========================
-  // DELETE COMMENT
-  // =========================
-
-  const handleDeleteComment = async (
-    commentId: number
-  ) => {
-
-    const confirmed =
-      window.confirm(
-        'Delete this comment?'
-      )
-
-
-    if (!confirmed) {
-      return
-    }
-
-
-    try {
-
-      setDeletingCommentId(
-        commentId
-      )
-
-      setCommentError('')
-
-
-      await deleteComment(
-        commentId
-      )
-
-
-      setComments(
-        (previousComments) =>
-          previousComments.filter(
-            (comment) =>
-              comment.id !== commentId
-          )
-      )
-
-
-    } catch (error) {
-
-      console.error(
-        'FAILED TO DELETE COMMENT:',
-        error
-      )
-
-      setCommentError(
-        'Failed to delete comment.'
-      )
-
-    } finally {
-
-      setDeletingCommentId(null)
-
-    }
-
-  }
-
-
-  // =========================
   // LOADING
   // =========================
 
@@ -659,6 +335,8 @@ function TaskDetails() {
     return (
 
       <div className="app">
+
+        <Navbar />
 
         <main className="main">
 
@@ -688,6 +366,8 @@ function TaskDetails() {
     return (
 
       <div className="app">
+
+        <Navbar />
 
         <main className="main">
 
@@ -726,11 +406,23 @@ function TaskDetails() {
     <div className="app">
 
 
+      {/* =========================
+          NAVBAR
+      ========================= */}
+
       <Navbar />
 
 
+      {/* =========================
+          MAIN
+      ========================= */}
+
       <main className="main">
 
+
+        {/* =========================
+            BACK BUTTON
+        ========================= */}
 
         <Link
           to="/tasks"
@@ -766,7 +458,7 @@ function TaskDetails() {
 
               {editing
                 ? 'Update the task information below.'
-                : 'View task information and collaborate with your team.'}
+                : 'View task information and status.'}
 
             </p>
 
@@ -776,11 +468,15 @@ function TaskDetails() {
 
 
         {/* =========================
-            TASK DETAILS
+            TASK DETAILS PANEL
         ========================= */}
 
         <section className="panel">
 
+
+          {/* =========================
+              PANEL HEADER
+          ========================= */}
 
           <div className="panel-header">
 
@@ -800,7 +496,7 @@ function TaskDetails() {
                   style={{
                     width: '100%',
                     padding: '12px',
-                    fontSize: '20px'
+                    fontSize: '20px',
                   }}
                 />
 
@@ -823,13 +519,16 @@ function TaskDetails() {
             <div
               style={{
                 display: 'flex',
-                gap: '12px'
+                gap: '12px',
               }}
             >
 
 
+              {/* EDIT BUTTON */}
+
               <button
                 className="secondary-button"
+                type="button"
                 onClick={
                   editing
                     ? handleCancelEdit
@@ -845,8 +544,11 @@ function TaskDetails() {
               </button>
 
 
+              {/* DELETE BUTTON */}
+
               <button
                 className="secondary-button"
+                type="button"
                 onClick={handleDelete}
                 disabled={
                   deleting ||
@@ -866,11 +568,15 @@ function TaskDetails() {
           </div>
 
 
+          {/* =========================
+              ERROR MESSAGE
+          ========================= */}
+
           {error && (
 
             <p
               style={{
-                marginBottom: '16px'
+                marginBottom: '16px',
               }}
             >
               {error}
@@ -879,10 +585,16 @@ function TaskDetails() {
           )}
 
 
+          {/* =========================
+              TASK DETAILS
+          ========================= */}
+
           <div className="task-details">
 
 
-            {/* DESCRIPTION */}
+            {/* =========================
+                DESCRIPTION
+            ========================= */}
 
             <div className="task-detail-item">
 
@@ -904,7 +616,7 @@ function TaskDetails() {
                   style={{
                     width: '100%',
                     marginTop: '8px',
-                    padding: '12px'
+                    padding: '12px',
                   }}
                 />
 
@@ -922,7 +634,9 @@ function TaskDetails() {
             </div>
 
 
-            {/* STATUS */}
+            {/* =========================
+                STATUS
+            ========================= */}
 
             <div className="task-detail-item">
 
@@ -967,7 +681,9 @@ function TaskDetails() {
             </div>
 
 
-            {/* PRIORITY */}
+            {/* =========================
+                PRIORITY
+            ========================= */}
 
             <div className="task-detail-item">
 
@@ -1012,7 +728,9 @@ function TaskDetails() {
             </div>
 
 
-            {/* DUE DATE */}
+            {/* =========================
+                DUE DATE
+            ========================= */}
 
             <div className="task-detail-item">
 
@@ -1050,7 +768,9 @@ function TaskDetails() {
             </div>
 
 
-            {/* ASSIGNEE */}
+            {/* =========================
+                ASSIGNEE
+            ========================= */}
 
             <div className="task-detail-item">
 
@@ -1087,6 +807,10 @@ function TaskDetails() {
           </div>
 
 
+          {/* =========================
+              SAVE BUTTONS
+          ========================= */}
+
           {editing && (
 
             <div
@@ -1094,13 +818,14 @@ function TaskDetails() {
                 marginTop: '24px',
                 display: 'flex',
                 justifyContent: 'flex-end',
-                gap: '12px'
+                gap: '12px',
               }}
             >
 
 
               <button
                 className="secondary-button"
+                type="button"
                 onClick={handleCancelEdit}
                 disabled={saving}
               >
@@ -1110,6 +835,7 @@ function TaskDetails() {
 
               <button
                 className="primary-button"
+                type="button"
                 onClick={handleSave}
                 disabled={
                   saving ||
@@ -1133,362 +859,12 @@ function TaskDetails() {
 
 
         {/* =========================
-            COMMENTS
+            TASK COMMENTS
         ========================= */}
 
-        <section
-          className="panel"
-          style={{
-            marginTop: '24px'
-          }}
-        >
-
-
-          <div className="panel-header">
-
-            <div>
-
-              <h2>
-                Comments
-              </h2>
-
-              <p>
-                Collaborate and discuss this task.
-              </p>
-
-            </div>
-
-
-            <button
-              className="secondary-button"
-              onClick={loadComments}
-              disabled={loadingComments}
-            >
-              {loadingComments
-                ? 'Loading...'
-                : 'Refresh'}
-            </button>
-
-          </div>
-
-
-          {/* COMMENT ERROR */}
-
-          {commentError && (
-
-            <p
-              style={{
-                marginBottom: '16px'
-              }}
-            >
-              {commentError}
-            </p>
-
-          )}
-
-
-          {/* =========================
-              CREATE COMMENT
-          ========================= */}
-
-          <div
-            style={{
-              marginBottom: '24px'
-            }}
-          >
-
-
-            <textarea
-              value={newComment}
-              onChange={(event) =>
-                setNewComment(
-                  event.target.value
-                )
-              }
-              rows={4}
-              placeholder="Write a comment..."
-              style={{
-                width: '100%',
-                padding: '12px',
-                marginBottom: '12px'
-              }}
-            />
-
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end'
-              }}
-            >
-
-              <button
-                className="primary-button"
-                onClick={handleCreateComment}
-                disabled={
-                  creatingComment ||
-                  newComment.trim() === ''
-                }
-              >
-
-                {creatingComment
-                  ? 'Posting...'
-                  : 'Post Comment'}
-
-              </button>
-
-            </div>
-
-
-          </div>
-
-
-          {/* =========================
-              COMMENTS LIST
-          ========================= */}
-
-          {loadingComments ? (
-
-            <div className="empty-state">
-
-              <h3>
-                Loading comments...
-              </h3>
-
-            </div>
-
-          ) : comments.length === 0 ? (
-
-            <div className="empty-state">
-
-              <div className="empty-icon">
-                💬
-              </div>
-
-              <h3>
-                No comments yet
-              </h3>
-
-              <p>
-                Start the conversation by
-                adding the first comment.
-              </p>
-
-            </div>
-
-          ) : (
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px'
-              }}
-            >
-
-              {comments.map(
-                (comment) => (
-
-                  <div
-                    key={comment.id}
-                    className="task-detail-item"
-                    style={{
-                      padding: '16px',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px'
-                    }}
-                  >
-
-
-                    {/* COMMENT HEADER */}
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        gap: '16px',
-                        marginBottom: '12px'
-                      }}
-                    >
-
-
-                      <div>
-
-                        <strong>
-
-                          {comment.userFirstName}{' '}
-
-                          {comment.userLastName}
-
-                        </strong>
-
-
-                        <p
-                          style={{
-                            margin: '4px 0 0'
-                          }}
-                        >
-
-                          {comment.userEmail}
-
-                        </p>
-
-                      </div>
-
-
-                      <small>
-
-                        {comment.createdAt
-                          ? new Date(
-                              comment.createdAt
-                            ).toLocaleString()
-                          : ''}
-
-                      </small>
-
-
-                    </div>
-
-
-                    {/* COMMENT CONTENT */}
-
-                    {editingCommentId ===
-                    comment.id ? (
-
-                      <textarea
-                        value={
-                          editingCommentContent
-                        }
-                        onChange={(event) =>
-                          setEditingCommentContent(
-                            event.target.value
-                          )
-                        }
-                        rows={4}
-                        style={{
-                          width: '100%',
-                          padding: '12px'
-                        }}
-                      />
-
-                    ) : (
-
-                      <p>
-
-                        {comment.content}
-
-                      </p>
-
-                    )}
-
-
-                    {/* COMMENT ACTIONS */}
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        gap: '12px',
-                        marginTop: '12px'
-                      }}
-                    >
-
-
-                      {editingCommentId ===
-                      comment.id ? (
-
-                        <>
-
-                          <button
-                            className="secondary-button"
-                            onClick={
-                              handleCancelEditComment
-                            }
-                            disabled={
-                              savingComment
-                            }
-                          >
-                            Cancel
-                          </button>
-
-
-                          <button
-                            className="primary-button"
-                            onClick={() =>
-                              handleSaveComment(
-                                comment.id
-                              )
-                            }
-                            disabled={
-                              savingComment ||
-                              editingCommentContent
-                                .trim() === ''
-                            }
-                          >
-
-                            {savingComment
-                              ? 'Saving...'
-                              : 'Save'}
-
-                          </button>
-
-                        </>
-
-                      ) : (
-
-                        <>
-
-                          <button
-                            className="secondary-button"
-                            onClick={() =>
-                              handleStartEditComment(
-                                comment
-                              )
-                            }
-                          >
-                            Edit
-                          </button>
-
-
-                          <button
-                            className="secondary-button"
-                            onClick={() =>
-                              handleDeleteComment(
-                                comment.id
-                              )
-                            }
-                            disabled={
-                              deletingCommentId ===
-                              comment.id
-                            }
-                          >
-
-                            {deletingCommentId ===
-                            comment.id
-                              ? 'Deleting...'
-                              : 'Delete'}
-
-                          </button>
-
-                        </>
-
-                      )}
-
-
-                    </div>
-
-
-                  </div>
-
-                )
-              )}
-
-            </div>
-
-          )}
-
-
-        </section>
+        <TaskComments
+          taskId={task.id}
+        />
 
 
       </main>
