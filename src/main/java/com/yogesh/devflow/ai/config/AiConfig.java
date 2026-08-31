@@ -9,20 +9,26 @@ import org.springframework.web.client.RestClient;
 public class AiConfig {
 
     @Bean
-    public RestClient restClient() {
-        return RestClient.builder()
-                .baseUrl("https://generativelanguage.googleapis.com")
+    public RestClient geminiRestClient() {
+
+        return RestClient
+                .builder()
+                .baseUrl(
+                        "https://generativelanguage.googleapis.com"
+                )
                 .build();
     }
 
-    @Bean
+
+    @Bean(name = "geminiApiKey")
     public String geminiApiKey(
             @Value("${gemini.api.key}") String apiKey) {
 
         return apiKey;
     }
 
-    @Bean
+
+    @Bean(name = "geminiModel")
     public String geminiModel(
             @Value("${gemini.model}") String model) {
 

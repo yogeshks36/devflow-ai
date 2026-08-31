@@ -10,7 +10,10 @@ import {
   type Task,
   type UpdateTaskRequest,
 } from '../api/tasksApi'
-
+import {
+  generateTaskBreakdown,
+  type AiTaskBreakdownResponse
+} from '../api/aiApi'
 import TaskComments from '../components/TaskComments'
 
 
@@ -19,6 +22,32 @@ function TaskDetails() {
   const { taskId } = useParams()
 
   const navigate = useNavigate()
+
+  // =========================
+// AI BREAKDOWN STATE
+// =========================
+
+const [
+  aiBreakdown,
+  setAiBreakdown
+] =
+  useState<
+    AiTaskBreakdownResponse | null
+  >(null)
+
+
+const [
+  generatingAi,
+  setGeneratingAi
+] =
+  useState(false)
+
+
+const [
+  aiError,
+  setAiError
+] =
+  useState('')
 
 
   // =========================
@@ -67,6 +96,71 @@ function TaskDetails() {
 
   const [dueDate, setDueDate] =
     useState('')
+
+  // =========================
+// GENERATE AI BREAKDOWN
+// =========================
+
+const handleGenerateAiBreakdown =
+  async () => {
+
+    if (!task) {
+      return
+    }
+
+
+    try {
+
+      setGeneratingAi(true)
+
+      setAiError('')
+
+
+      const taskDescription =
+        task.description &&
+        task.description.trim() !== ''
+          ? `
+Title:
+${task.title}
+
+Description:
+${task.description}
+            `.trim()
+          : task.title
+
+
+      const response =
+        await generateTaskBreakdown({
+
+          taskDescription
+
+        })
+
+
+      setAiBreakdown(
+        response
+      )
+
+
+    } catch (error) {
+
+      console.error(
+        'FAILED TO GENERATE AI BREAKDOWN:',
+        error
+      )
+
+
+      setAiError(
+        'Failed to generate AI task breakdown.'
+      )
+
+    } finally {
+
+      setGeneratingAi(false)
+
+    }
+
+  }
 
 
   // =========================
@@ -523,6 +617,23 @@ function TaskDetails() {
               }}
             >
 
+            <button
+  className="primary-button"
+  type="button"
+  onClick={
+    handleGenerateAiBreakdown
+  }
+  disabled={
+    generatingAi ||
+    saving ||
+    deleting
+  }
+>
+  {generatingAi
+    ? 'Generating...'
+    : '✨ Generate AI Breakdown'}
+</button>
+
 
               {/* EDIT BUTTON */}
 
@@ -856,6 +967,157 @@ function TaskDetails() {
 
 
         </section>
+
+        {/* =========================
+    AI TASK BREAKDOWN
+========================= */}
+
+<section className="panel">
+
+  <div className="panel-header">
+
+    <div>
+
+      <p className="eyebrow">
+        AI ASSISTANT
+      </p>
+
+      <h2>
+        AI Task Breakdown
+      </h2>
+
+      <p>
+        Generate smaller actionable steps
+        for this task.
+      </p>
+
+    </div>
+
+  </div>
+
+
+  {/* AI ERROR */}
+
+  {aiError && (
+
+    <div className="empty-state">
+
+      <h3>
+        AI request failed
+      </h3>
+
+      <p>
+        {aiError}
+      </p>
+
+    </div>
+
+  )}
+
+
+  {/* NO AI RESULT */}
+
+  {!aiBreakdown &&
+    !generatingAi &&
+    !aiError && (
+
+      <div className="empty-state">
+
+        <div className="empty-icon">
+          ✨
+        </div>
+
+        <h3>
+          Need help breaking this down?
+        </h3>
+
+        <p>
+          DevFlow AI can turn this task
+          into smaller actionable steps.
+        </p>
+
+        <button
+          className="primary-button"
+          type="button"
+          onClick={
+            handleGenerateAiBreakdown
+          }
+        >
+          ✨ Generate AI Breakdown
+        </button>
+
+      </div>
+
+    )}
+
+
+  {/* GENERATING */}
+
+  {generatingAi && (
+
+    <div className="empty-state">
+
+      <div className="empty-icon">
+        ✨
+      </div>
+
+      <h3>
+        DevFlow AI is thinking...
+      </h3>
+
+      <p>
+        Generating actionable subtasks.
+      </p>
+
+    </div>
+
+  )}
+
+
+  {/* AI RESULT */}
+
+  {aiBreakdown &&
+    !generatingAi && (
+
+      <div className="dashboard-tasks">
+
+        {aiBreakdown.subtasks.map(
+          (
+            subtask,
+            index
+          ) => (
+
+            <div
+              className="dashboard-task"
+              key={index}
+            >
+
+              <div className="dashboard-task-info">
+
+                <h3>
+
+                  Step {index + 1}
+
+                </h3>
+
+                <p>
+
+                  {subtask}
+
+                </p>
+
+              </div>
+
+            </div>
+
+          )
+        )}
+
+      </div>
+
+    )}
+
+</section>
 
 
         {/* =========================

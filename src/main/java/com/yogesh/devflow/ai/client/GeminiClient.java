@@ -5,8 +5,8 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,144 +15,318 @@ import com.yogesh.devflow.exception.AiServiceException;
 @Component
 public class GeminiClient {
 
+    private static final int MAX_ATTEMPTS = 3;
+
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
 
     private final String apiKey;
     private final String model;
 
+
     public GeminiClient(
-            RestClient restClient,
+            RestClient geminiRestClient,
             ObjectMapper objectMapper,
             @Qualifier("geminiApiKey") String apiKey,
             @Qualifier("geminiModel") String model) {
 
-        this.restClient = restClient;
-        this.objectMapper = objectMapper;
-        this.apiKey = apiKey;
-        this.model = model;
+        this.restClient =
+                geminiRestClient;
+
+        this.objectMapper =
+                objectMapper;
+
+        this.apiKey =
+                apiKey;
+
+        this.model =
+                model;
     }
 
-    public String generateContent(String prompt) {
+
+    // =========================
+    // GENERATE CONTENT
+    // =========================
+
+    public String generateContent(
+            String prompt) {
+
+        if (apiKey == null ||
+                apiKey.isBlank()) {
+
+            throw new AiServiceException(
+                    "Gemini API key is not configured"
+            );
+        }
+
+
+        for (
+                int attempt = 1;
+                attempt <= MAX_ATTEMPTS;
+                attempt++
+        ) {
+
+            try {
+
+                return callGemini(
+                        prompt
+                );
+
+            } catch (
+                    HttpStatusCodeException e) {
+
+                int statusCode =
+                        e.getStatusCode()
+                                .value();
+
+
+                // =========================
+                // TEMPORARY SERVER FAILURE
+                // =========================
+
+                if (statusCode == 503) {
+
+                    if (attempt ==
+                            MAX_ATTEMPTS) {
+
+                        throw new AiServiceException(
+                                "Gemini is temporarily "
+                                + "experiencing high demand. "
+                                + "Please try again in a moment.",
+                                e
+                        );
+                    }
+
+
+                    waitBeforeRetry(
+                            attempt
+                    );
+
+                    continue;
+                }
+
+
+                // =========================
+                // RATE LIMIT
+                // =========================
+
+                if (statusCode == 429) {
+
+                    throw new AiServiceException(
+                            "Gemini API rate limit reached. "
+                            + "Please try again later.",
+                            e
+                    );
+                }
+
+
+                // =========================
+                // INVALID API KEY
+                // =========================
+
+                if (statusCode == 401 ||
+                        statusCode == 403) {
+
+                    throw new AiServiceException(
+                            "Gemini authentication failed. "
+                            + "Please check your API key.",
+                            e
+                    );
+                }
+
+
+                throw new AiServiceException(
+                        "Gemini API request failed",
+                        e
+                );
+
+            } catch (
+                    AiServiceException e) {
+
+                throw e;
+
+            } catch (
+                    Exception e) {
+
+                if (attempt ==
+                        MAX_ATTEMPTS) {
+
+                    throw new AiServiceException(
+                            "AI provider request failed",
+                            e
+                    );
+                }
+
+
+                waitBeforeRetry(
+                        attempt
+                );
+            }
+        }
+
+
+        throw new AiServiceException(
+                "AI request failed"
+        );
+    }
+
+
+    // =========================
+    // CALL GEMINI
+    // =========================
+
+    private String callGemini(
+            String prompt) {
+
+        Map<String, Object> requestBody =
+                Map.of(
+
+                        "contents",
+                        new Object[]{
+
+                                Map.of(
+
+                                        "parts",
+                                        new Object[]{
+
+                                                Map.of(
+
+                                                        "text",
+                                                        prompt
+                                                )
+                                        }
+                                )
+                        }
+                );
+
+
+        String response =
+                restClient
+                        .post()
+                        .uri(
+                                "/v1beta/models/"
+                                + model
+                                + ":generateContent?key="
+                                + apiKey
+                        )
+                        .contentType(
+                                MediaType.APPLICATION_JSON
+                        )
+                        .body(
+                                requestBody
+                        )
+                        .retrieve()
+                        .body(
+                                String.class
+                        );
+
+
+        return extractText(
+                response
+        );
+    }
+
+
+    // =========================
+    // EXTRACT TEXT
+    // =========================
+
+    private String extractText(
+            String response) {
 
         try {
 
-            Map<String, Object> responseSchema =
-                    Map.of(
-                            "type", "ARRAY",
-                            "items", Map.of(
-                                    "type", "OBJECT",
-                                    "properties", Map.of(
-                                            "title", Map.of(
-                                                    "type", "STRING"
-                                            ),
-                                            "description", Map.of(
-                                                    "type", "STRING"
-                                            )
-                                    ),
-                                    "required", new String[]{
-                                            "title",
-                                            "description"
-                                    }
-                            )
+            if (response == null ||
+                    response.isBlank()) {
+
+                throw new AiServiceException(
+                        "Gemini returned an empty response"
+                );
+            }
+
+
+            JsonNode root =
+                    objectMapper.readTree(
+                            response
                     );
 
-            Map<String, Object> generationConfig =
-                    Map.of(
-                            "responseMimeType",
-                            "application/json",
 
-                            "responseSchema",
-                            responseSchema
-                    );
-
-            Map<String, Object> requestBody =
-                    Map.of(
-                            "contents",
-                            new Object[]{
-                                    Map.of(
-                                            "parts",
-                                            new Object[]{
-                                                    Map.of(
-                                                            "text",
-                                                            prompt
-                                                    )
-                                            }
-                                    )
-                            },
-
-                            "generationConfig",
-                            generationConfig
-                    );
-
-            String response =
-                    restClient
-                            .post()
-                            .uri(
-                                    "/v1beta/models/"
-                                            + model
-                                            + ":generateContent?key="
-                                            + apiKey
+            JsonNode textNode =
+                    root
+                            .path(
+                                    "candidates"
                             )
-                            .contentType(
-                                    MediaType.APPLICATION_JSON
+                            .path(0)
+                            .path(
+                                    "content"
                             )
-                            .body(requestBody)
-                            .retrieve()
-                            .body(String.class);
+                            .path(
+                                    "parts"
+                            )
+                            .path(0)
+                            .path(
+                                    "text"
+                            );
 
-            return extractTextFromGeminiEnvelope(response);
 
-        }catch (HttpStatusCodeException e) {
+            if (textNode.isMissingNode() ||
+                    textNode.isNull() ||
+                    textNode.asText()
+                            .isBlank()) {
+
+                throw new AiServiceException(
+                        "Gemini returned an unexpected response"
+                );
+            }
+
+
+            return textNode
+                    .asText();
+
+        } catch (
+                AiServiceException e) {
+
+            throw e;
+
+        } catch (
+                Exception e) {
 
             throw new AiServiceException(
-                "Gemini API temporarily unavailable. Please try again later.",
-                e
-            );
-
-        }catch (Exception e) {
-
-            throw new AiServiceException(
-                    "AI provider request failed",
+                    "Failed to read Gemini response",
                     e
             );
         }
     }
 
-    private String extractTextFromGeminiEnvelope(
-            String response) {
+
+    // =========================
+    // RETRY WAIT
+    // =========================
+
+    private void waitBeforeRetry(
+            int attempt) {
 
         try {
 
-            JsonNode root =
-                    objectMapper.readTree(response);
+            long waitTime =
+                    1000L
+                    * attempt;
 
-            JsonNode textNode =
-                    root.path("candidates")
-                            .path(0)
-                            .path("content")
-                            .path("parts")
-                            .path(0)
-                            .path("text");
 
-            if (textNode.isMissingNode()
-                    || textNode.isNull()) {
+            Thread.sleep(
+                    waitTime
+            );
 
-                throw new AiServiceException(
-                        "Unexpected response shape"
-                );
-            }
+        } catch (
+                InterruptedException e) {
 
-            return textNode.asText();
+            Thread
+                    .currentThread()
+                    .interrupt();
 
-        } catch (AiServiceException e) {
-
-            throw e;
-
-        } catch (Exception e) {
 
             throw new AiServiceException(
-                    "Unexpected response shape",
+                    "AI request interrupted",
                     e
             );
         }
