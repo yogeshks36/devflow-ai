@@ -20,7 +20,7 @@ import ProjectDetails from './components/ProjectDetails'
 import Tasks from './pages/Tasks'
 import TaskDetails from './pages/TaskDetails'
 import { AuthProvider } from './context/AuthContext'
-
+import AiTaskBreakdown from './components/AiTaskBreakdown'
 import ProtectedRoute from './components/ProtectedRoute'
 
 import './App.css'
@@ -820,6 +820,11 @@ function App() {
                 <Dashboard />
               }
             />
+
+            <Route
+  path="/ai"
+  element={<AiTaskBreakdown />}
+/>
 
 
             {/* PROJECTS */}

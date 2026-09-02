@@ -1,11 +1,31 @@
 import api from './axios'
 
+
 // =========================
 // REQUEST
 // =========================
 
 export interface AiTaskBreakdownRequest {
-  taskDescription: string
+
+  projectId: number
+
+  title: string
+
+  description: string
+
+}
+
+
+// =========================
+// AI STEP
+// =========================
+
+export interface AiTaskStep {
+
+  title: string
+
+  description: string
+
 }
 
 
@@ -14,7 +34,9 @@ export interface AiTaskBreakdownRequest {
 // =========================
 
 export interface AiTaskBreakdownResponse {
-  subtasks: string[]
+
+  steps: AiTaskStep[]
+
 }
 
 
@@ -39,4 +61,5 @@ export const generateTaskBreakdown =
       )
 
     return response.data
+
   }
