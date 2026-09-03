@@ -727,12 +727,13 @@ function Dashboard() {
           </div>
 
 
-          <button
-            className="secondary-button"
-            type="button"
-          >
-            Try AI
-          </button>
+         <button
+  className="secondary-button"
+  type="button"
+  onClick={() => navigate('/ai')}
+>
+  ✦ Try AI
+</button>
 
         </section>
 

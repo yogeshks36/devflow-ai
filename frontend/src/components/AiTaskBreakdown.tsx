@@ -5,7 +5,6 @@ import {
 
 import {
   generateTaskBreakdown,
-  type AiTaskStep,
 } from '../api/aiApi'
 
 
@@ -35,10 +34,10 @@ function AiTaskBreakdown() {
 
 
   const [
-    steps,
-    setSteps,
+    subtasks,
+    setSubtasks,
   ] = useState<
-    AiTaskStep[]
+    string[]
   >([])
 
 
@@ -69,7 +68,7 @@ function AiTaskBreakdown() {
 
       setError('')
 
-      setSteps([])
+      setSubtasks([])
 
 
       // =========================
@@ -120,27 +119,54 @@ function AiTaskBreakdown() {
         setLoading(true)
 
 
-        const response =
-          await generateTaskBreakdown({
+        /*
+         * Backend expects ONLY:
+         *
+         * {
+         *   "taskDescription": "..."
+         * }
+         *
+         */
 
-            projectId:
-              Number(projectId),
+        const taskDescription =
+          `Project ID: ${projectId}
 
-            title:
-              title.trim(),
+Task title: ${title}
 
-            description:
-              description.trim(),
-
-          })
+Task description:
+${description}`
 
 
-        setSteps(
-          response.steps
+        console.log(
+          'SENDING AI REQUEST:',
+          {
+            taskDescription,
+          }
         )
 
 
-      } catch (error) {
+        const response =
+          await generateTaskBreakdown(
+            {
+              taskDescription,
+            }
+          )
+
+
+        console.log(
+          'AI RESPONSE RECEIVED:',
+          response
+        )
+
+
+        setSubtasks(
+          response.subtasks
+        )
+
+
+      } catch (
+        error
+      ) {
 
         console.error(
           'AI TASK BREAKDOWN ERROR:',
@@ -322,15 +348,17 @@ function AiTaskBreakdown() {
 
         {/* ERROR */}
 
-        {error && (
+        {
+          error && (
 
-          <p
-            className="login-error"
-          >
-            {error}
-          </p>
+            <p
+              className="login-error"
+            >
+              {error}
+            </p>
 
-        )}
+          )
+        }
 
 
         {/* BUTTON */}
@@ -359,11 +387,12 @@ function AiTaskBreakdown() {
       ========================= */}
 
       {
-        steps.length > 0 && (
+        subtasks.length > 0 && (
 
           <div
             style={{
-              marginTop: '28px',
+              marginTop:
+                '28px',
             }}
           >
 
@@ -375,14 +404,16 @@ function AiTaskBreakdown() {
             <div
               className="dashboard-tasks"
               style={{
-                marginTop: '16px',
+                marginTop:
+                  '16px',
               }}
             >
 
               {
-                steps.map(
+                subtasks.map(
+
                   (
-                    step,
+                    subtask,
                     index
                   ) => (
 
@@ -399,24 +430,16 @@ function AiTaskBreakdown() {
 
                           {index + 1}.
                           {' '}
-                          {step.title}
+                          {subtask}
 
                         </h3>
-
-
-                        <p>
-
-                          {
-                            step.description
-                          }
-
-                        </p>
 
                       </div>
 
                     </div>
 
                   )
+
                 )
               }
 

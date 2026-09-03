@@ -3,17 +3,31 @@ import type {
   InternalAxiosRequestConfig,
 } from 'axios'
 
+
 const api = axios.create({
+
   baseURL: 'http://localhost:8080/api',
+
+  timeout: 30000,
+
   headers: {
     'Content-Type': 'application/json',
   },
+
 })
 
-api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
 
-    const token = localStorage.getItem('devflow_token')
+api.interceptors.request.use(
+
+  (
+    config: InternalAxiosRequestConfig
+  ) => {
+
+    const token =
+      localStorage.getItem(
+        'devflow_token'
+      )
+
 
     console.log(
       'AXIOS REQUEST:',
@@ -21,15 +35,18 @@ api.interceptors.request.use(
       config.url
     )
 
+
     console.log(
       'TOKEN FROM LOCAL STORAGE:',
       token
     )
 
+
     if (token) {
 
       config.headers.Authorization =
         `Bearer ${token}`
+
 
       console.log(
         'AUTHORIZATION HEADER SET'
@@ -40,15 +57,20 @@ api.interceptors.request.use(
       console.log(
         'NO TOKEN FOUND'
       )
+
     }
 
+
     return config
+
   },
 
-  (error) => {
-    return Promise.reject(error)
-  }
+
+  (error) =>
+    Promise.reject(error)
+
 )
+
 
 api.interceptors.response.use(
 
@@ -61,22 +83,25 @@ api.interceptors.response.use(
     )
 
     return response
+
   },
+
 
   (error) => {
 
     console.error(
       'API ERROR:',
+      error.code,
+      error.message,
       error.response?.status,
       error.response?.data
     )
 
-    // IMPORTANT:
-    // Do NOT remove the token automatically yet.
-    // We are debugging authentication.
-
     return Promise.reject(error)
+
   }
+
 )
+
 
 export default api

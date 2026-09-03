@@ -1,56 +1,35 @@
 import api from './axios'
 
 
-// =========================
-// REQUEST
-// =========================
-
 export interface AiTaskBreakdownRequest {
 
-  projectId: number
-
-  title: string
-
-  description: string
+  taskDescription:
+    string
 
 }
 
-
-// =========================
-// AI STEP
-// =========================
-
-export interface AiTaskStep {
-
-  title: string
-
-  description: string
-
-}
-
-
-// =========================
-// RESPONSE
-// =========================
 
 export interface AiTaskBreakdownResponse {
 
-  steps: AiTaskStep[]
+  subtasks:
+    string[]
 
 }
 
 
-// =========================
-// GENERATE TASK BREAKDOWN
-// =========================
-
 export const generateTaskBreakdown =
   async (
+
     request:
       AiTaskBreakdownRequest
-  ): Promise<
-    AiTaskBreakdownResponse
-  > => {
+
+  ) => {
+
+    console.log(
+      'AI REQUEST BODY:',
+      request
+    )
+
 
     const response =
       await api.post<
@@ -59,6 +38,13 @@ export const generateTaskBreakdown =
         '/ai/task-breakdown',
         request
       )
+
+
+    console.log(
+      'AI RESPONSE:',
+      response.data
+    )
+
 
     return response.data
 
