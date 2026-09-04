@@ -67,9 +67,28 @@ export const createTask = async (
   data: CreateTaskRequest
 ): Promise<Task> => {
 
-  const response = await api.post<Task>(
-    `/projects/${projectId}/tasks`,
+  const url =
+    `/projects/${projectId}/tasks`
+
+  console.log(
+    'CREATE TASK URL:',
+    url
+  )
+
+  console.log(
+    'CREATE TASK DATA:',
     data
+  )
+
+  const response = await api.post<Task>(
+    url,
+    data
+  )
+
+  console.log(
+    'CREATE TASK SUCCESS:',
+    response.status,
+    response.data
   )
 
   return response.data

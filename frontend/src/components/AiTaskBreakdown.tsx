@@ -7,6 +7,25 @@ import {
   generateTaskBreakdown,
 } from '../api/aiApi'
 
+import {
+  createTask,
+} from '../api/tasksApi'
+
+
+// =========================
+// GENERATED SUBTASK TYPE
+// =========================
+
+interface GeneratedSubtask {
+
+  text:
+    string
+
+  selected:
+    boolean
+
+}
+
 
 function AiTaskBreakdown() {
 
@@ -22,14 +41,8 @@ function AiTaskBreakdown() {
 
 
   const [
-    title,
-    setTitle,
-  ] = useState('')
-
-
-  const [
-    description,
-    setDescription,
+    taskDescription,
+    setTaskDescription,
   ] = useState('')
 
 
@@ -37,7 +50,7 @@ function AiTaskBreakdown() {
     subtasks,
     setSubtasks,
   ] = useState<
-    string[]
+    GeneratedSubtask[]
   >([])
 
 
@@ -48,8 +61,20 @@ function AiTaskBreakdown() {
 
 
   const [
+    saving,
+    setSaving,
+  ] = useState(false)
+
+
+  const [
     error,
     setError,
+  ] = useState('')
+
+
+  const [
+    successMessage,
+    setSuccessMessage,
   ] = useState('')
 
 
@@ -68,6 +93,8 @@ function AiTaskBreakdown() {
 
       setError('')
 
+      setSuccessMessage('')
+
       setSubtasks([])
 
 
@@ -76,33 +103,8 @@ function AiTaskBreakdown() {
       // =========================
 
       if (
-        projectId.trim() === ''
-      ) {
-
-        setError(
-          'Please enter a project ID.'
-        )
-
-        return
-
-      }
-
-
-      if (
-        title.trim() === ''
-      ) {
-
-        setError(
-          'Please enter a task title.'
-        )
-
-        return
-
-      }
-
-
-      if (
-        description.trim() === ''
+        taskDescription
+          .trim() === ''
       ) {
 
         setError(
@@ -119,54 +121,42 @@ function AiTaskBreakdown() {
         setLoading(true)
 
 
-        /*
-         * Backend expects ONLY:
-         *
-         * {
-         *   "taskDescription": "..."
-         * }
-         *
-         */
-
-        const taskDescription =
-          `Project ID: ${projectId}
-
-Task title: ${title}
-
-Task description:
-${description}`
-
-
-        console.log(
-          'SENDING AI REQUEST:',
-          {
-            taskDescription,
-          }
-        )
-
-
         const response =
-          await generateTaskBreakdown(
-            {
-              taskDescription,
-            }
-          )
+          await generateTaskBreakdown({
+
+            taskDescription:
+              taskDescription.trim(),
+
+          })
 
 
-        console.log(
-          'AI RESPONSE RECEIVED:',
-          response
-        )
-
+        // =========================
+        // CONVERT AI STRINGS
+        // TO SELECTABLE TASKS
+        // =========================
 
         setSubtasks(
-          response.subtasks
+
+          response.subtasks.map(
+
+            (
+              subtask
+            ) => ({
+
+              text:
+                subtask,
+
+              selected:
+                true,
+
+            })
+
+          )
+
         )
 
 
-      } catch (
-        error
-      ) {
+      } catch (error) {
 
         console.error(
           'AI TASK BREAKDOWN ERROR:',
@@ -186,6 +176,287 @@ ${description}`
       }
 
     }
+
+
+  // =========================
+  // TOGGLE SINGLE TASK
+  // =========================
+
+  const handleToggleTask =
+    (
+      index:
+        number
+    ) => {
+
+      setSubtasks(
+
+        subtasks.map(
+
+          (
+            subtask,
+            taskIndex
+          ) => {
+
+            if (
+              taskIndex === index
+            ) {
+
+              return {
+
+                ...subtask,
+
+                selected:
+                  !subtask.selected,
+
+              }
+
+            }
+
+
+            return subtask
+
+          }
+
+        )
+
+      )
+
+    }
+
+
+  // =========================
+  // SELECT / DESELECT ALL
+  // =========================
+
+  const handleToggleAll =
+    () => {
+
+      const allSelected =
+        subtasks.every(
+
+          (
+            subtask
+          ) =>
+            subtask.selected
+        )
+
+
+      setSubtasks(
+
+        subtasks.map(
+
+          (
+            subtask
+          ) => ({
+
+            ...subtask,
+
+            selected:
+              !allSelected,
+
+          })
+
+        )
+
+      )
+
+    }
+
+
+  // =========================
+  // SELECTED TASKS
+  // =========================
+
+  const selectedSubtasks =
+    subtasks.filter(
+
+      (
+        subtask
+      ) =>
+        subtask.selected
+
+    )
+
+
+  // =========================
+  // SAVE SELECTED AI SUBTASKS
+  // =========================
+
+  const handleSaveTasks =
+    async () => {
+
+
+      setError('')
+
+      setSuccessMessage('')
+
+
+      // =========================
+      // VALIDATION
+      // =========================
+
+      if (
+        projectId.trim() === ''
+      ) {
+
+        setError(
+          'Please enter a project ID before saving tasks.'
+        )
+
+        return
+
+      }
+
+
+      const numericProjectId =
+        Number(projectId)
+
+
+      if (
+        Number.isNaN(
+          numericProjectId
+        )
+      ) {
+
+        setError(
+          'Project ID must be a valid number.'
+        )
+
+        return
+
+      }
+
+
+      if (
+        selectedSubtasks.length === 0
+      ) {
+
+        setError(
+          'Please select at least one task to save.'
+        )
+
+        return
+
+      }
+
+
+      try {
+
+        setSaving(true)
+
+
+        // =========================
+        // CREATE SELECTED TASKS
+        // =========================
+
+        await Promise.all(
+
+          selectedSubtasks.map(
+
+            (
+              subtask
+            ) =>
+
+              createTask(
+
+                numericProjectId,
+
+                {
+
+                  title:
+                    subtask.text,
+
+                  description:
+                    `AI-generated subtask for: ${taskDescription}`,
+
+                  status:
+                    'TODO',
+
+                  priority:
+                    'MEDIUM',
+
+                  dueDate:
+                    null,
+
+                  assigneeId:
+                    null,
+
+                }
+
+              )
+
+          )
+
+        )
+
+
+        setSuccessMessage(
+
+          `${selectedSubtasks.length} selected task(s) successfully added to project ${numericProjectId}.`
+
+        )
+
+
+      } catch (error: any) {
+
+        console.error(
+          'SAVE AI TASKS ERROR:',
+          error
+        )
+
+
+        console.error(
+          'STATUS:',
+          error.response?.status
+        )
+
+
+        console.error(
+          'URL:',
+          error.config?.baseURL +
+          error.config?.url
+        )
+
+
+        console.error(
+          'RESPONSE:',
+          error.response?.data
+        )
+
+
+        setError(
+
+          `Failed to save AI-generated tasks. Status: ${
+            error.response?.status ??
+            'Unknown'
+          }`
+
+        )
+
+
+      } finally {
+
+        setSaving(false)
+
+      }
+
+    }
+
+
+  // =========================
+  // CHECK IF ALL SELECTED
+  // =========================
+
+  const allSelected =
+    subtasks.length > 0 &&
+    subtasks.every(
+
+      (
+        subtask
+      ) =>
+        subtask.selected
+
+    )
 
 
   // =========================
@@ -223,7 +494,7 @@ ${description}`
 
           <p>
             Describe a task and let AI generate
-            smaller actionable steps.
+            smaller actionable subtasks.
           </p>
 
         </div>
@@ -263,47 +534,16 @@ ${description}`
             }
             onChange={
               (event) =>
+
                 setProjectId(
                   event.target.value
                 )
+
             }
-            placeholder="Example: 4"
+            placeholder="Example: 1"
             disabled={
-              loading
-            }
-          />
-
-        </div>
-
-
-        {/* TASK TITLE */}
-
-        <div
-          className="form-group"
-        >
-
-          <label
-            htmlFor="task-title"
-          >
-            Task title
-          </label>
-
-
-          <input
-            id="task-title"
-            type="text"
-            value={
-              title
-            }
-            onChange={
-              (event) =>
-                setTitle(
-                  event.target.value
-                )
-            }
-            placeholder="Example: Build login page"
-            disabled={
-              loading
+              loading ||
+              saving
             }
           />
 
@@ -317,29 +557,32 @@ ${description}`
         >
 
           <label
-            htmlFor="task-description"
+            htmlFor="ai-task-description"
           >
             Task description
           </label>
 
 
           <textarea
-            id="task-description"
+            id="ai-task-description"
             value={
-              description
+              taskDescription
             }
             onChange={
               (event) =>
-                setDescription(
+
+                setTaskDescription(
                   event.target.value
                 )
+
             }
             placeholder={
-              'Example: Create an email/password login page with JWT authentication.'
+              'Example: Build a user authentication system with registration, login and JWT authentication.'
             }
             rows={6}
             disabled={
-              loading
+              loading ||
+              saving
             }
           />
 
@@ -361,20 +604,47 @@ ${description}`
         }
 
 
-        {/* BUTTON */}
+        {/* SUCCESS */}
+
+        {
+          successMessage && (
+
+            <p
+              style={{
+                marginTop:
+                  '12px',
+
+                fontWeight:
+                  '600',
+              }}
+            >
+
+              {successMessage}
+
+            </p>
+
+          )
+        }
+
+
+        {/* GENERATE BUTTON */}
 
         <button
           type="submit"
           className="primary-button"
           disabled={
-            loading
+            loading ||
+            saving
           }
         >
 
           {
             loading
+
               ? 'Generating...'
+
               : '✦ Generate with AI'
+
           }
 
         </button>
@@ -396,17 +666,93 @@ ${description}`
             }}
           >
 
-            <h3>
-              AI-generated steps
-            </h3>
 
+            {/* HEADER */}
+
+            <div
+              style={{
+                display:
+                  'flex',
+
+                justifyContent:
+                  'space-between',
+
+                alignItems:
+                  'center',
+
+                marginBottom:
+                  '16px',
+              }}
+            >
+
+              <div>
+
+                <h3>
+                  AI-generated subtasks
+                </h3>
+
+
+                <p
+                  style={{
+                    marginTop:
+                      '6px',
+                  }}
+                >
+
+                  {
+                    selectedSubtasks.length
+                  }
+
+                  {' '}
+
+                  of
+
+                  {' '}
+
+                  {
+                    subtasks.length
+                  }
+
+                  {' '}
+
+                  selected
+
+                </p>
+
+              </div>
+
+
+              {/* SELECT ALL */}
+
+              <button
+                type="button"
+                onClick={
+                  handleToggleAll
+                }
+                disabled={
+                  saving ||
+                  loading
+                }
+              >
+
+                {
+                  allSelected
+
+                    ? 'Deselect All'
+
+                    : 'Select All'
+
+                }
+
+              </button>
+
+            </div>
+
+
+            {/* TASK LIST */}
 
             <div
               className="dashboard-tasks"
-              style={{
-                marginTop:
-                  '16px',
-              }}
             >
 
               {
@@ -422,6 +768,31 @@ ${description}`
                       key={index}
                     >
 
+                      <input
+                        type="checkbox"
+                        checked={
+                          subtask.selected
+                        }
+                        onChange={
+                          () =>
+                            handleToggleTask(
+                              index
+                            )
+                        }
+                        disabled={
+                          saving ||
+                          loading
+                        }
+                        style={{
+                          marginRight:
+                            '12px',
+
+                          cursor:
+                            'pointer',
+                        }}
+                      />
+
+
                       <div
                         className="dashboard-task-info"
                       >
@@ -429,8 +800,10 @@ ${description}`
                         <h3>
 
                           {index + 1}.
+
                           {' '}
-                          {subtask}
+
+                          {subtask.text}
 
                         </h3>
 
@@ -444,6 +817,39 @@ ${description}`
               }
 
             </div>
+
+
+            {/* =========================
+                SAVE BUTTON
+            ========================= */}
+
+            <button
+              type="button"
+              className="primary-button"
+              onClick={
+                handleSaveTasks
+              }
+              disabled={
+                saving ||
+                loading ||
+                selectedSubtasks.length === 0
+              }
+              style={{
+                marginTop:
+                  '20px',
+              }}
+            >
+
+              {
+                saving
+
+                  ? 'Saving tasks...'
+
+                  : `Save ${selectedSubtasks.length} selected task(s)`
+
+              }
+
+            </button>
 
           </div>
 

@@ -27,6 +27,7 @@ public class TaskServiceImpl implements TaskService {
     private final UserRepository userRepository;
     private final ProjectMemberRepository projectMemberRepository;
 
+
     public TaskServiceImpl(
             TaskRepository taskRepository,
             ProjectRepository projectRepository,
@@ -39,6 +40,7 @@ public class TaskServiceImpl implements TaskService {
         this.projectMemberRepository = projectMemberRepository;
     }
 
+
     // =========================
     // CREATE TASK
     // =========================
@@ -49,15 +51,31 @@ public class TaskServiceImpl implements TaskService {
             Long projectId,
             TaskRequest request) {
 
-        User owner = getUserByEmail(email);
+        User user =
+                getUserByEmail(email);
 
+
+        // Owner OR project member
         Project project =
-                getOwnedProject(projectId, owner);
+                getAccessibleProject(
+                        projectId,
+                        user
+                );
 
-        Task task = new Task();
 
-        task.setTitle(request.getTitle());
-        task.setDescription(request.getDescription());
+        Task task =
+                new Task();
+
+
+        task.setTitle(
+                request.getTitle()
+        );
+
+
+        task.setDescription(
+                request.getDescription()
+        );
+
 
         task.setStatus(
                 request.getStatus() != null
@@ -65,60 +83,102 @@ public class TaskServiceImpl implements TaskService {
                         : TaskStatus.TODO
         );
 
+
         task.setPriority(
                 request.getPriority() != null
                         ? request.getPriority()
                         : TaskPriority.MEDIUM
         );
 
-        task.setDueDate(request.getDueDate());
 
-        task.setProject(project);
+        task.setDueDate(
+                request.getDueDate()
+        );
+
+
+        task.setProject(
+                project
+        );
+
 
         // =========================
         // ASSIGNEE
         // =========================
 
-        if (request.getAssigneeId() != null) {
+        if (
+                request.getAssigneeId() != null
+        ) {
 
             User assignee =
                     userRepository
-                            .findById(request.getAssigneeId())
+                            .findById(
+                                    request.getAssigneeId()
+                            )
                             .orElseThrow(() ->
                                     new ResourceNotFoundException(
                                             "Assignee not found"
                                     )
                             );
 
-            // Project owner can be assigned
-            boolean isOwner =
-                    assignee.getId()
-                            .equals(owner.getId());
 
-            // Check whether user is a project member
-            boolean isMember =
+            // =========================
+            // PROJECT OWNER
+            // =========================
+
+            boolean isProjectOwner =
+                    assignee.getId()
+                            .equals(
+                                    project
+                                            .getOwner()
+                                            .getId()
+                            );
+
+
+            // =========================
+            // PROJECT MEMBER
+            // =========================
+
+            boolean isProjectMember =
                     projectMemberRepository
                             .existsByProjectAndUser(
                                     project,
                                     assignee
                             );
 
-            // Existing user but not part of project
-            if (!isOwner && !isMember) {
+
+            // =========================
+            // VALIDATE ASSIGNEE
+            // =========================
+
+            if (
+                    !isProjectOwner
+                            &&
+                    !isProjectMember
+            ) {
 
                 throw new AccessDeniedException(
                         "User is not a member of this project"
                 );
             }
 
-            task.setAssignee(assignee);
+
+            task.setAssignee(
+                    assignee
+            );
         }
 
-        Task savedTask =
-                taskRepository.save(task);
 
-        return toTaskResponse(savedTask);
+        Task savedTask =
+                taskRepository.save(
+                        task
+                );
+
+
+        return toTaskResponse(
+                savedTask
+        );
     }
+
 
     // =========================
     // GET PROJECT TASKS
@@ -130,15 +190,102 @@ public class TaskServiceImpl implements TaskService {
             Long projectId,
             Pageable pageable) {
 
-        User owner = getUserByEmail(email);
+        User user =
+                getUserByEmail(email);
 
+
+        // Owner OR project member
         Project project =
-                getOwnedProject(projectId, owner);
+                getAccessibleProject(
+                        projectId,
+                        user
+                );
+
 
         return taskRepository
-                .findByProject(project, pageable)
-                .map(this::toTaskResponse);
+                .findByProject(
+                        project,
+                        pageable
+                )
+                .map(
+                        this::toTaskResponse
+                );
     }
+
+
+    // =========================
+    // GET ALL TASKS
+    // =========================
+
+    @Override
+    public Page<TaskResponse> getAllTasks(
+            String email,
+            TaskStatus status,
+            TaskPriority priority,
+            Pageable pageable) {
+
+        User user =
+                getUserByEmail(email);
+
+
+        Page<Task> tasks;
+
+
+        if (
+                status != null
+                        &&
+                priority != null
+        ) {
+
+            tasks =
+                    taskRepository
+                            .findByProjectOwnerAndStatusAndPriority(
+                                    user,
+                                    status,
+                                    priority,
+                                    pageable
+                            );
+
+        } else if (
+                status != null
+        ) {
+
+            tasks =
+                    taskRepository
+                            .findByProjectOwnerAndStatus(
+                                    user,
+                                    status,
+                                    pageable
+                            );
+
+        } else if (
+                priority != null
+        ) {
+
+            tasks =
+                    taskRepository
+                            .findByProjectOwnerAndPriority(
+                                    user,
+                                    priority,
+                                    pageable
+                            );
+
+        } else {
+
+            tasks =
+                    taskRepository
+                            .findByProjectOwner(
+                                    user,
+                                    pageable
+                            );
+        }
+
+
+        return tasks.map(
+                this::toTaskResponse
+        );
+    }
+
 
     // =========================
     // GET TASK BY ID
@@ -149,73 +296,29 @@ public class TaskServiceImpl implements TaskService {
             String email,
             Long taskId) {
 
-        User owner = getUserByEmail(email);
+        User user =
+                getUserByEmail(email);
+
 
         Task task =
-                getTask(taskId);
+                getTask(
+                        taskId
+                );
 
-        verifyTaskOwnership(
+
+        // Owner OR member access
+        verifyTaskAccess(
                 task,
-                owner
+                user
         );
 
-        return toTaskResponse(task);
+
+        return toTaskResponse(
+                task
+        );
     }
 
-   @Override
-public Page<TaskResponse> getAllTasks(
-        String email,
-        TaskStatus status,
-        TaskPriority priority,
-        Pageable pageable) {
 
-    User owner = getUserByEmail(email);
-
-    Page<Task> tasks;
-
-    if (status != null && priority != null) {
-
-        tasks =
-                taskRepository
-                        .findByProjectOwnerAndStatusAndPriority(
-                                owner,
-                                status,
-                                priority,
-                                pageable
-                        );
-
-    } else if (status != null) {
-
-        tasks =
-                taskRepository
-                        .findByProjectOwnerAndStatus(
-                                owner,
-                                status,
-                                pageable
-                        );
-
-    } else if (priority != null) {
-
-        tasks =
-                taskRepository
-                        .findByProjectOwnerAndPriority(
-                                owner,
-                                priority,
-                                pageable
-                        );
-
-    } else {
-
-        tasks =
-                taskRepository
-                        .findByProjectOwner(
-                                owner,
-                                pageable
-                        );
-    }
-
-    return tasks.map(this::toTaskResponse);
-}
     // =========================
     // UPDATE TASK
     // =========================
@@ -226,89 +329,135 @@ public Page<TaskResponse> getAllTasks(
             Long taskId,
             TaskRequest request) {
 
-        User owner = getUserByEmail(email);
+        User user =
+                getUserByEmail(email);
+
 
         Task task =
-                getTask(taskId);
+                getTask(
+                        taskId
+                );
 
-        verifyTaskOwnership(
+
+        // Owner OR member access
+        verifyTaskAccess(
                 task,
-                owner
+                user
         );
 
-        task.setTitle(request.getTitle());
-        task.setDescription(request.getDescription());
 
-        if (request.getStatus() != null) {
+        task.setTitle(
+                request.getTitle()
+        );
+
+
+        task.setDescription(
+                request.getDescription()
+        );
+
+
+        if (
+                request.getStatus() != null
+        ) {
 
             task.setStatus(
                     request.getStatus()
             );
         }
 
-        if (request.getPriority() != null) {
+
+        if (
+                request.getPriority() != null
+        ) {
 
             task.setPriority(
                     request.getPriority()
             );
         }
 
+
         task.setDueDate(
                 request.getDueDate()
         );
+
 
         // =========================
         // UPDATE ASSIGNEE
         // =========================
 
-        if (request.getAssigneeId() != null) {
+        if (
+                request.getAssigneeId() != null
+        ) {
 
             User assignee =
                     userRepository
-                            .findById(request.getAssigneeId())
+                            .findById(
+                                    request.getAssigneeId()
+                            )
                             .orElseThrow(() ->
                                     new ResourceNotFoundException(
                                             "Assignee not found"
                                     )
                             );
 
-            User projectOwner =
-                    task.getProject().getOwner();
 
-            // Project owner can be assigned
-            boolean isOwner =
+            Project project =
+                    task.getProject();
+
+
+            boolean isProjectOwner =
                     assignee.getId()
-                            .equals(projectOwner.getId());
+                            .equals(
+                                    project
+                                            .getOwner()
+                                            .getId()
+                            );
 
-            // Check whether user is a project member
-            boolean isMember =
+
+            boolean isProjectMember =
                     projectMemberRepository
                             .existsByProjectAndUser(
-                                    task.getProject(),
+                                    project,
                                     assignee
                             );
 
-            // Existing user but not part of project
-            if (!isOwner && !isMember) {
+
+            if (
+                    !isProjectOwner
+                            &&
+                    !isProjectMember
+            ) {
 
                 throw new AccessDeniedException(
                         "User is not a member of this project"
                 );
             }
 
-            task.setAssignee(assignee);
+
+            task.setAssignee(
+                    assignee
+            );
 
         } else {
 
-            // No assigneeId means remove current assignee
-            task.setAssignee(null);
+            // Remove assignee
+            task.setAssignee(
+                    null
+            );
         }
 
-        Task updatedTask =
-                taskRepository.save(task);
 
-        return toTaskResponse(updatedTask);
+        Task updatedTask =
+                taskRepository.save(
+                        task
+                );
+
+
+        return toTaskResponse(
+                updatedTask
+        );
     }
+
 
     // =========================
     // DELETE TASK
@@ -319,19 +468,29 @@ public Page<TaskResponse> getAllTasks(
             String email,
             Long taskId) {
 
-        User owner =
+        User user =
                 getUserByEmail(email);
 
-        Task task =
-                getTask(taskId);
 
+        Task task =
+                getTask(
+                        taskId
+                );
+
+
+        // IMPORTANT:
+        // Only project owner can delete
         verifyTaskOwnership(
                 task,
-                owner
+                user
         );
 
-        taskRepository.delete(task);
+
+        taskRepository.delete(
+                task
+        );
     }
+
 
     // =========================
     // FIND USER BY EMAIL
@@ -341,7 +500,9 @@ public Page<TaskResponse> getAllTasks(
             String email) {
 
         return userRepository
-                .findByEmail(email)
+                .findByEmail(
+                        email
+                )
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "User not found"
@@ -349,25 +510,60 @@ public Page<TaskResponse> getAllTasks(
                 );
     }
 
+
     // =========================
-    // FIND OWNED PROJECT
+    // PROJECT ACCESS
+    // OWNER OR MEMBER
     // =========================
 
-    private Project getOwnedProject(
+    private Project getAccessibleProject(
             Long projectId,
-            User owner) {
+            User user) {
 
-        return projectRepository
-                .findByIdAndOwner(
-                        projectId,
-                        owner
-                )
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Project not found"
+        Project project =
+                projectRepository
+                        .findById(
+                                projectId
                         )
-                );
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Project not found"
+                                )
+                        );
+
+
+        boolean isOwner =
+                project
+                        .getOwner()
+                        .getId()
+                        .equals(
+                                user.getId()
+                        );
+
+
+        boolean isMember =
+                projectMemberRepository
+                        .existsByProjectAndUser(
+                                project,
+                                user
+                        );
+
+
+        if (
+                !isOwner
+                        &&
+                !isMember
+        ) {
+
+            throw new AccessDeniedException(
+                    "You do not have access to this project"
+            );
+        }
+
+
+        return project;
     }
+
 
     // =========================
     // FIND TASK
@@ -377,7 +573,9 @@ public Page<TaskResponse> getAllTasks(
             Long taskId) {
 
         return taskRepository
-                .findById(taskId)
+                .findById(
+                        taskId
+                )
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Task not found"
@@ -385,26 +583,89 @@ public Page<TaskResponse> getAllTasks(
                 );
     }
 
+
     // =========================
-    // VERIFY TASK OWNERSHIP
+    // VERIFY TASK ACCESS
+    // OWNER OR MEMBER
     // =========================
 
-    private void verifyTaskOwnership(
+    private void verifyTaskAccess(
             Task task,
-            User owner) {
+            User user) {
 
-        if (task.getProject() == null
-                || task.getProject().getOwner() == null
-                || !task.getProject()
+        if (
+                task.getProject() == null
+        ) {
+
+            throw new AccessDeniedException(
+                    "Task does not belong to a project"
+            );
+        }
+
+
+        Project project =
+                task.getProject();
+
+
+        boolean isOwner =
+                project
                         .getOwner()
                         .getId()
-                        .equals(owner.getId())) {
+                        .equals(
+                                user.getId()
+                        );
+
+
+        boolean isMember =
+                projectMemberRepository
+                        .existsByProjectAndUser(
+                                project,
+                                user
+                        );
+
+
+        if (
+                !isOwner
+                        &&
+                !isMember
+        ) {
 
             throw new AccessDeniedException(
                     "You do not have permission to access this task"
             );
         }
     }
+
+
+    // =========================
+    // VERIFY TASK OWNERSHIP
+    // OWNER ONLY
+    // =========================
+
+    private void verifyTaskOwnership(
+            Task task,
+            User user) {
+
+        if (
+                task.getProject() == null
+                        ||
+                task.getProject().getOwner() == null
+                        ||
+                !task
+                        .getProject()
+                        .getOwner()
+                        .getId()
+                        .equals(
+                                user.getId()
+                        )
+        ) {
+
+            throw new AccessDeniedException(
+                    "Only the project owner can perform this action"
+            );
+        }
+    }
+
 
     // =========================
     // CONVERT TASK TO RESPONSE
@@ -416,63 +677,85 @@ public Page<TaskResponse> getAllTasks(
         TaskResponse response =
                 new TaskResponse();
 
+
         response.setId(
                 task.getId()
         );
+
 
         response.setTitle(
                 task.getTitle()
         );
 
+
         response.setDescription(
                 task.getDescription()
         );
+
 
         response.setStatus(
                 task.getStatus()
         );
 
+
         response.setPriority(
                 task.getPriority()
         );
+
 
         response.setDueDate(
                 task.getDueDate()
         );
 
+
         // =========================
         // PROJECT
         // =========================
 
-        if (task.getProject() != null) {
+        if (
+                task.getProject() != null
+        ) {
 
             response.setProjectId(
-                    task.getProject().getId()
+                    task
+                            .getProject()
+                            .getId()
             );
         }
+
 
         // =========================
         // ASSIGNEE
         // =========================
 
-        if (task.getAssignee() != null) {
+        if (
+                task.getAssignee() != null
+        ) {
 
             response.setAssigneeId(
-                    task.getAssignee().getId()
+                    task
+                            .getAssignee()
+                            .getId()
             );
 
+
             response.setAssigneeEmail(
-                    task.getAssignee().getEmail()
+                    task
+                            .getAssignee()
+                            .getEmail()
             );
         }
+
 
         response.setCreatedAt(
                 task.getCreatedAt()
         );
 
+
         response.setUpdatedAt(
                 task.getUpdatedAt()
         );
+
 
         return response;
     }

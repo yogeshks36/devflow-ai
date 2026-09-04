@@ -1,6 +1,10 @@
 import api from './axios'
 
 
+// =========================
+// REQUEST TYPE
+// =========================
+
 export interface AiTaskBreakdownRequest {
 
   taskDescription:
@@ -8,6 +12,10 @@ export interface AiTaskBreakdownRequest {
 
 }
 
+
+// =========================
+// RESPONSE TYPE
+// =========================
 
 export interface AiTaskBreakdownResponse {
 
@@ -17,13 +25,19 @@ export interface AiTaskBreakdownResponse {
 }
 
 
+// =========================
+// GENERATE AI BREAKDOWN
+// =========================
+
 export const generateTaskBreakdown =
   async (
 
     request:
       AiTaskBreakdownRequest
 
-  ) => {
+  ): Promise<
+    AiTaskBreakdownResponse
+  > => {
 
     console.log(
       'AI REQUEST BODY:',
@@ -35,8 +49,11 @@ export const generateTaskBreakdown =
       await api.post<
         AiTaskBreakdownResponse
       >(
+
         '/ai/task-breakdown',
+
         request
+
       )
 
 
