@@ -53,6 +53,9 @@ function Dashboard() {
   const [taskCount, setTaskCount] =
     useState(0)
 
+  const [completedTaskCount, setCompletedTaskCount] =
+    useState(0)
+
   const [recentTasks, setRecentTasks] =
     useState<Task[]>([])
 
@@ -70,7 +73,7 @@ function Dashboard() {
       const response =
         await getProjects(
           0,
-          10
+          100
         )
 
       console.log(
@@ -84,10 +87,14 @@ function Dashboard() {
 
 
       // =========================
-      // LOAD RECENT TASKS
+      // LOAD TASKS + STATISTICS
       // =========================
 
       const allTasks: Task[] = []
+
+      let totalTasks = 0
+      let completedTasks = 0
+
 
       for (
         const project
@@ -100,55 +107,25 @@ function Dashboard() {
             await getProjectTasks(
               project.id,
               0,
-              3
+              100
             )
+
 
           allTasks.push(
             ...taskResponse.content
           )
 
-        } catch (error) {
-
-          console.error(
-            `FAILED TO LOAD TASKS FOR PROJECT ${project.id}:`,
-            error
-          )
-
-        }
-
-      }
-
-
-      setRecentTasks(
-        allTasks.slice(
-          0,
-          5
-        )
-      )
-
-
-      // =========================
-      // LOAD TOTAL TASK COUNT
-      // =========================
-
-      let totalTasks = 0
-
-      for (
-        const project
-        of response.content
-      ) {
-
-        try {
-
-          const taskResponse =
-            await getProjectTasks(
-              project.id,
-              0,
-              1
-            )
 
           totalTasks +=
             taskResponse.totalElements
+
+
+          completedTasks +=
+            taskResponse.content.filter(
+              (task) =>
+                task.status === 'DONE'
+            ).length
+
 
         } catch (error) {
 
@@ -167,9 +144,29 @@ function Dashboard() {
         totalTasks
       )
 
+      console.log(
+        'COMPLETED DASHBOARD TASKS:',
+        completedTasks
+      )
+
+
+      setRecentTasks(
+        allTasks.slice(
+          0,
+          5
+        )
+      )
+
+
       setTaskCount(
         totalTasks
       )
+
+
+      setCompletedTaskCount(
+        completedTasks
+      )
+
 
     } catch (error) {
 
@@ -401,7 +398,9 @@ function Dashboard() {
             </span>
 
             <strong>
-              0
+              {loadingProjects
+                ? '...'
+                : completedTaskCount}
             </strong>
 
             <span className="stat-description">
@@ -727,13 +726,15 @@ function Dashboard() {
           </div>
 
 
-         <button
-  className="secondary-button"
-  type="button"
-  onClick={() => navigate('/ai')}
->
-  ✦ Try AI
-</button>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() =>
+              navigate('/ai')
+            }
+          >
+            Try AI
+          </button>
 
         </section>
 

@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useState,
   type FormEvent,
 } from 'react'
@@ -11,33 +12,48 @@ import {
   createTask,
 } from '../api/tasksApi'
 
+import {
+  getProjects,
+  type Project,
+} from '../api/projectsApi'
+
 
 // =========================
 // GENERATED SUBTASK TYPE
 // =========================
 
 interface GeneratedSubtask {
-
-  text:
-    string
-
-  selected:
-    boolean
-
+  text: string
+  selected: boolean
 }
 
 
-function AiTaskBreakdown() {
+// =========================
+// COMPONENT
+// =========================
 
+function AiTaskBreakdown() {
 
   // =========================
   // STATE
   // =========================
 
   const [
+    projects,
+    setProjects,
+  ] = useState<Project[]>([])
+
+
+  const [
     projectId,
     setProjectId,
   ] = useState('')
+  
+
+  const [
+    loadingProjects,
+    setLoadingProjects,
+  ] = useState(true)
 
 
   const [
@@ -49,9 +65,7 @@ function AiTaskBreakdown() {
   const [
     subtasks,
     setSubtasks,
-  ] = useState<
-    GeneratedSubtask[]
-  >([])
+  ] = useState<GeneratedSubtask[]>([])
 
 
   const [
@@ -79,13 +93,62 @@ function AiTaskBreakdown() {
 
 
   // =========================
+  // LOAD PROJECTS
+  // =========================
+
+  useEffect(() => {
+
+    const loadProjects =
+      async () => {
+
+        try {
+
+          setLoadingProjects(true)
+
+          setError('')
+
+          const response =
+            await getProjects(
+              0,
+              100
+            )
+
+          setProjects(
+            response.content
+          )
+
+        } catch (error) {
+
+          console.error(
+            'LOAD PROJECTS ERROR:',
+            error
+          )
+
+          setError(
+            'Failed to load projects. Please try again.'
+          )
+
+        } finally {
+
+          setLoadingProjects(false)
+
+        }
+
+      }
+
+
+    loadProjects()
+
+  }, [])
+
+
+  // =========================
   // GENERATE AI BREAKDOWN
   // =========================
 
   const handleGenerate =
     async (
-      event:
-        FormEvent<HTMLFormElement>
+      event: FormEvent<HTMLFormElement>
     ) => {
 
       event.preventDefault()
@@ -120,6 +183,10 @@ function AiTaskBreakdown() {
 
         setLoading(true)
 
+
+        // =========================
+        // CALL AI
+        // =========================
 
         const response =
           await generateTaskBreakdown({
@@ -184,8 +251,7 @@ function AiTaskBreakdown() {
 
   const handleToggleTask =
     (
-      index:
-        number
+      index: number
     ) => {
 
       setSubtasks(
@@ -238,6 +304,7 @@ function AiTaskBreakdown() {
             subtask
           ) =>
             subtask.selected
+
         )
 
 
@@ -285,22 +352,21 @@ function AiTaskBreakdown() {
   const handleSaveTasks =
     async () => {
 
-
       setError('')
 
       setSuccessMessage('')
 
 
       // =========================
-      // VALIDATION
+      // VALIDATE PROJECT
       // =========================
 
       if (
-        projectId.trim() === ''
+        projectId === ''
       ) {
 
         setError(
-          'Please enter a project ID before saving tasks.'
+          'Please select a project before saving tasks.'
         )
 
         return
@@ -319,13 +385,17 @@ function AiTaskBreakdown() {
       ) {
 
         setError(
-          'Project ID must be a valid number.'
+          'Selected project is invalid.'
         )
 
         return
 
       }
 
+
+      // =========================
+      // VALIDATE TASKS
+      // =========================
 
       if (
         selectedSubtasks.length === 0
@@ -390,11 +460,34 @@ function AiTaskBreakdown() {
         )
 
 
+        // =========================
+        // SUCCESS
+        // =========================
+
+        const selectedProject =
+          projects.find(
+            (
+              project
+            ) =>
+              project.id ===
+              numericProjectId
+          )
+
+
         setSuccessMessage(
 
-          `${selectedSubtasks.length} selected task(s) successfully added to project ${numericProjectId}.`
+          `${selectedSubtasks.length} selected task(s) successfully added to ${
+            selectedProject?.name ??
+            `project ${numericProjectId}`
+          }.`
 
         )
+
+
+        // Clear generated tasks
+        // after successful save
+
+        setSubtasks([])
 
 
       } catch (error: any) {
@@ -469,7 +562,6 @@ function AiTaskBreakdown() {
       className="panel"
     >
 
-
       {/* =========================
           HEADER
       ========================= */}
@@ -512,45 +604,94 @@ function AiTaskBreakdown() {
         }
       >
 
-
-        {/* PROJECT ID */}
+        {/* =========================
+            PROJECT SELECTOR
+        ========================= */}
 
         <div
           className="form-group"
         >
 
           <label
-            htmlFor="project-id"
+            htmlFor="project-select"
           >
-            Project ID
+            Project
           </label>
 
 
-          <input
-            id="project-id"
-            type="number"
-            value={
-              projectId
-            }
+          <select
+            id="project-select"
+            value={projectId}
             onChange={
-              (event) =>
-
+              (
+                event
+              ) =>
                 setProjectId(
                   event.target.value
                 )
-
             }
-            placeholder="Example: 1"
             disabled={
+              loadingProjects ||
               loading ||
               saving
             }
-          />
+          >
+
+            <option
+              value=""
+            >
+              {
+                loadingProjects
+                  ? 'Loading projects...'
+                  : 'Select a project'
+              }
+            </option>
+
+
+            {
+              projects.map(
+
+                (
+                  project
+                ) => (
+
+                  <option
+                    key={project.id}
+                    value={project.id}
+                  >
+                    {project.name}
+                  </option>
+
+                )
+
+              )
+            }
+
+          </select>
+
+
+          {
+            !loadingProjects &&
+            projects.length === 0 && (
+
+              <p
+                style={{
+                  marginTop: '8px',
+                }}
+              >
+                No projects available.
+                Create or join a project first.
+              </p>
+
+            )
+          }
 
         </div>
 
 
-        {/* TASK DESCRIPTION */}
+        {/* =========================
+            TASK DESCRIPTION
+        ========================= */}
 
         <div
           className="form-group"
@@ -569,7 +710,9 @@ function AiTaskBreakdown() {
               taskDescription
             }
             onChange={
-              (event) =>
+              (
+                event
+              ) =>
 
                 setTaskDescription(
                   event.target.value
@@ -589,7 +732,9 @@ function AiTaskBreakdown() {
         </div>
 
 
-        {/* ERROR */}
+        {/* =========================
+            ERROR
+        ========================= */}
 
         {
           error && (
@@ -604,7 +749,9 @@ function AiTaskBreakdown() {
         }
 
 
-        {/* SUCCESS */}
+        {/* =========================
+            SUCCESS
+        ========================= */}
 
         {
           successMessage && (
@@ -627,14 +774,18 @@ function AiTaskBreakdown() {
         }
 
 
-        {/* GENERATE BUTTON */}
+        {/* =========================
+            GENERATE BUTTON
+        ========================= */}
 
         <button
           type="submit"
           className="primary-button"
           disabled={
             loading ||
-            saving
+            saving ||
+            loadingProjects ||
+            projects.length === 0
           }
         >
 
@@ -666,8 +817,9 @@ function AiTaskBreakdown() {
             }}
           >
 
-
-            {/* HEADER */}
+            {/* =========================
+                HEADER
+            ========================= */}
 
             <div
               style={{
@@ -722,7 +874,9 @@ function AiTaskBreakdown() {
               </div>
 
 
-              {/* SELECT ALL */}
+              {/* =========================
+                  SELECT ALL
+              ========================= */}
 
               <button
                 type="button"
@@ -749,7 +903,9 @@ function AiTaskBreakdown() {
             </div>
 
 
-            {/* TASK LIST */}
+            {/* =========================
+                TASK LIST
+            ========================= */}
 
             <div
               className="dashboard-tasks"
@@ -832,7 +988,9 @@ function AiTaskBreakdown() {
               disabled={
                 saving ||
                 loading ||
-                selectedSubtasks.length === 0
+                loadingProjects ||
+                selectedSubtasks.length === 0 ||
+                projectId === ''
               }
               style={{
                 marginTop:
@@ -854,6 +1012,7 @@ function AiTaskBreakdown() {
           </div>
 
         )
+
       }
 
     </section>
