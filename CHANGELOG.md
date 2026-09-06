@@ -1,0 +1,47 @@
+# Changelog
+
+All notable changes and verified progress for DevFlow AI are documented here.
+
+## 2026-09-06
+
+### Verified
+- Frontend production build passes successfully with `npm run build`.
+- TypeScript compilation passes as part of the production build.
+- Protected routes verified:
+  - `/dashboard`
+  - `/projects`
+  - `/tasks`
+  - `/team`
+- Logged-out users are redirected to the Login page for all protected routes.
+- Login failure state verified with invalid credentials:
+  - `Wrong email or password`
+- Empty task validation verified:
+  - `Task title is required`
+- Non-existent project error state verified:
+  - `Failed to load project.`
+  - `Try Again` action is displayed.
+- Backend/network failure state verified:
+  - `Failed to load project.`
+- `TaskComments.tsx` is the single comment implementation used by `TaskDetails.tsx`; no duplicate inline comment implementation remains.
+- Frontend currently contains no known production-blocking TypeScript/build errors.
+
+### Testing
+- Backend automated test suite: 17 tests passing, 0 failures, 0 errors.
+- Task authorization tests cover:
+  - Project owner can delete a task.
+  - Project member cannot delete a task.
+  - Outsider cannot delete a task.
+- Backend tests use an isolated H2 test database.
+
+### Deferred
+- Frontend `console.log` cleanup is intentionally deferred.
+- JWT/token-related debug logs should be removed before production deployment.
+- Remaining frontend debug logs should be cleaned up during final production polish.
+
+### Next
+- Complete authorization test audit based on the actual existing test classes.
+- Continue frontend final audit.
+- Clean demo/test data after test coverage is confirmed.
+- Review production configuration and CORS.
+- Deploy backend, database, and frontend.
+- Complete README and GitHub polish.
