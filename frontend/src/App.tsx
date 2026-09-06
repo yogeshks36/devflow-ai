@@ -3,7 +3,9 @@ import { getProjects, type Project } from './api/projectsApi'
 import { getProjectTasks, type Task } from './api/tasksApi'
 import { useAuth } from './context/AuthContext'
 
-
+import {
+  getProjectMembers
+} from './api/projectMembersApi'
 import {
   BrowserRouter,
   Routes,
@@ -59,7 +61,10 @@ function Dashboard() {
   const [recentTasks, setRecentTasks] =
     useState<Task[]>([])
 
+  const [teamMemberCount, setTeamMemberCount] =
+  useState(0)
 
+ 
   // =========================
   // LOAD PROJECTS
   // =========================
@@ -84,6 +89,49 @@ function Dashboard() {
       setProjects(
         response.content
       )
+
+      // =========================
+// LOAD TEAM MEMBERS
+// =========================
+
+const uniqueMemberIds =
+  new Set<number>()
+
+for (
+  const project of response.content
+) {
+
+  try {
+
+    const members =
+      await getProjectMembers(
+        project.id
+      )
+
+    members.forEach(
+      (member) => {
+
+        uniqueMemberIds.add(
+          member.userId
+        )
+
+      }
+    )
+
+  } catch (error) {
+
+    console.error(
+      `FAILED TO LOAD MEMBERS FOR PROJECT ${project.id}:`,
+      error
+    )
+
+  }
+
+}
+
+setTeamMemberCount(
+  uniqueMemberIds.size
+)
 
 
       // =========================
@@ -385,7 +433,7 @@ function Dashboard() {
             </strong>
 
             <span className="stat-description">
-              Tasks assigned
+              Total tasks 
             </span>
 
           </div>
@@ -417,7 +465,8 @@ function Dashboard() {
             </span>
 
             <strong>
-              0
+              {loadingProjects ? '...' : teamMemberCount}
+
             </strong>
 
             <span className="stat-description">
