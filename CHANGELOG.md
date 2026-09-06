@@ -26,7 +26,9 @@ All notable changes and verified progress for DevFlow AI are documented here.
 - Frontend currently contains no known production-blocking TypeScript/build errors.
 
 ### Testing
-- Backend automated test suite: 17 tests passing, 0 failures, 0 errors.
+- Backend automated test suite: 29 tests passing, 0 failures, 0 errors, 0 skipped.
+- Added `JwtServiceTest` with 4 tests.
+- Added `UserServiceImplTest` with 8 tests.
 - Task authorization tests cover:
   - Project owner can delete a task.
   - Project member cannot delete a task.
