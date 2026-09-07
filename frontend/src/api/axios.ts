@@ -29,17 +29,10 @@ api.interceptors.request.use(
       )
 
 
-    console.log(
-      'AXIOS REQUEST:',
-      config.method?.toUpperCase(),
-      config.url
-    )
+   
 
 
-    console.log(
-      'TOKEN FROM LOCAL STORAGE:',
-      token
-    )
+   
 
 
     if (token) {
@@ -48,15 +41,11 @@ api.interceptors.request.use(
         `Bearer ${token}`
 
 
-      console.log(
-        'AUTHORIZATION HEADER SET'
-      )
+      
 
     } else {
 
-      console.log(
-        'NO TOKEN FOUND'
-      )
+      
 
     }
 
@@ -76,11 +65,7 @@ api.interceptors.response.use(
 
   (response) => {
 
-    console.log(
-      'API SUCCESS:',
-      response.config.url,
-      response.status
-    )
+    
 
     return response
 
@@ -89,13 +74,7 @@ api.interceptors.response.use(
 
   (error) => {
 
-    console.error(
-      'API ERROR:',
-      error.code,
-      error.message,
-      error.response?.status,
-      error.response?.data
-    )
+    
 
     return Promise.reject(error)
 

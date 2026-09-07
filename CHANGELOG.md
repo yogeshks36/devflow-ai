@@ -34,6 +34,14 @@ All notable changes and verified progress for DevFlow AI are documented here.
   - Project member cannot delete a task.
   - Outsider cannot delete a task.
 - Backend tests use an isolated H2 test database.
+- Backend security integration tests: 4 tests passing, 0 failures, 0 errors.
+- Full backend test suite: 33 tests passing, 0 failures, 0 errors, 0 skipped.
+- Security integration coverage verifies:
+  - Protected endpoint without JWT returns 401.
+  - Invalid JWT returns 401.
+  - Valid USER JWT can access protected user endpoint.
+  - Normal USER cannot access ADMIN-only endpoint and receives 403.
+- Enabled method-level authorization with `@EnableMethodSecurity`.
 
 ### Deferred
 - Frontend `console.log` cleanup is intentionally deferred.

@@ -39,37 +39,22 @@ function Login() {
 
       setLoading(true)
 
-      console.log('Attempting login...')
+      
 
       const response = await login({
         email,
         password,
       })
 
-      console.log(
-        'LOGIN SUCCESS:',
-        response
-      )
+      
 
-      console.log(
-        'TOKEN FROM LOGIN:',
-        response.token
-      )
+      
 
-      // Make sure backend actually returned a token
-      if (!response.token) {
-        throw new Error(
-          'Login response does not contain a token'
-        )
-      }
+      
 
-      // Save JWT
-      loginUser(response.token)
+      
 
-      console.log(
-        'TOKEN AFTER loginUser:',
-        localStorage.getItem('devflow_token')
-      )
+      
 
       // Redirect
       navigate('/', {

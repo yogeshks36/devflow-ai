@@ -70,26 +70,16 @@ export const createTask = async (
   const url =
     `/projects/${projectId}/tasks`
 
-  console.log(
-    'CREATE TASK URL:',
-    url
-  )
+ 
 
-  console.log(
-    'CREATE TASK DATA:',
-    data
-  )
+  
 
   const response = await api.post<Task>(
     url,
     data
   )
 
-  console.log(
-    'CREATE TASK SUCCESS:',
-    response.status,
-    response.data
-  )
+  
 
   return response.data
 }

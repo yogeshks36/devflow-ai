@@ -39,10 +39,7 @@ export const generateTaskBreakdown =
     AiTaskBreakdownResponse
   > => {
 
-    console.log(
-      'AI REQUEST BODY:',
-      request
-    )
+    
 
 
     const response =
@@ -57,10 +54,7 @@ export const generateTaskBreakdown =
       )
 
 
-    console.log(
-      'AI RESPONSE:',
-      response.data
-    )
+   
 
 
     return response.data

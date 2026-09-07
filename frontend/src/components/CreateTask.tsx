@@ -64,20 +64,14 @@ function CreateTask({
           : null,
       }
 
-      console.log(
-        'CREATING TASK:',
-        data
-      )
+      
 
-      const response = await createTask(
-        projectId,
-        data
-      )
+      await createTask(
+  projectId,
+  data
+)
 
-      console.log(
-        'TASK CREATED:',
-        response
-      )
+      
 
       onCreated()
 

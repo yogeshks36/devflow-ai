@@ -99,10 +99,7 @@ function ProjectDetails() {
           numericProjectId
         )
 
-      console.log(
-        'PROJECT DETAILS:',
-        response
-      )
+      
 
       setProject(response)
 
@@ -144,10 +141,7 @@ function ProjectDetails() {
           50
         )
 
-      console.log(
-        'PROJECT TASKS:',
-        response
-      )
+      
 
       setTasks(
         response.content
@@ -189,10 +183,7 @@ function ProjectDetails() {
           numericProjectId
         )
 
-      console.log(
-        'PROJECT MEMBERS:',
-        response
-      )
+      
 
       setMembers(response)
 
