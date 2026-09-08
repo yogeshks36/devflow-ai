@@ -32,10 +32,7 @@ function Projects() {
 
       const response = await getProjects(page, 10)
 
-      console.log(
-        'PROJECTS FROM BACKEND:',
-        response
-      )
+
 
       setProjects(response.content)
 

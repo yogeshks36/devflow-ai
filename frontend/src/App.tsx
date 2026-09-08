@@ -64,7 +64,7 @@ function Dashboard() {
   const [teamMemberCount, setTeamMemberCount] =
   useState(0)
 
- 
+
   // =========================
   // LOAD PROJECTS
   // =========================
@@ -81,10 +81,7 @@ function Dashboard() {
           100
         )
 
-      console.log(
-        'DASHBOARD PROJECTS:',
-        response
-      )
+
 
       setProjects(
         response.content
@@ -187,15 +184,9 @@ setTeamMemberCount(
       }
 
 
-      console.log(
-        'TOTAL DASHBOARD TASKS:',
-        totalTasks
-      )
 
-      console.log(
-        'COMPLETED DASHBOARD TASKS:',
-        completedTasks
-      )
+
+
 
 
       setRecentTasks(
@@ -433,7 +424,7 @@ setTeamMemberCount(
             </strong>
 
             <span className="stat-description">
-              Total tasks 
+              Total tasks
             </span>
 
           </div>
@@ -806,9 +797,7 @@ setTeamMemberCount(
 
           onCreated={() => {
 
-            console.log(
-              'Project created successfully'
-            )
+
 
             setShowCreateProject(
               false

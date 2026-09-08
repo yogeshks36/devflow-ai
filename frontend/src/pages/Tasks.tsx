@@ -64,10 +64,7 @@ function Tasks() {
           priorityFilter || undefined
         )
 
-      console.log(
-        'ALL TASKS:',
-        response
-      )
+      
 
       setTasks(
         response.content

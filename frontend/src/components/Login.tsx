@@ -36,48 +36,40 @@ function Login() {
     }
 
     try {
+  setLoading(true)
 
-      setLoading(true)
+  const response = await login({
+    email,
+    password,
+  })
 
-      
-
-      const response = await login({
-        email,
-        password,
-      })
-
-      
-
-      
-
-      
-
-      
-
-      
-
-      // Redirect
-      navigate('/', {
-        replace: true,
-      })
-
-    } catch (error) {
-
-      console.error(
-        'LOGIN ERROR:',
-        error
-      )
-
-      setError(
-        'Invalid email or password'
-      )
-
-    } finally {
-
-      setLoading(false)
-
-    }
+  // Make sure backend actually returned a token
+  if (!response.token) {
+    throw new Error(
+      'Login response does not contain a token'
+    )
   }
+
+  // Save JWT
+  loginUser(response.token)
+
+  // Redirect
+  navigate('/', {
+    replace: true,
+  })
+} catch (error) {
+  console.error(
+    'LOGIN ERROR:',
+    error
+  )
+
+  setError(
+    'Invalid email or password'
+  )
+} finally {
+  setLoading(false)
+}
+}
 
   return (
     <div className="login-page">

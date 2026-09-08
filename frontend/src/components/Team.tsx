@@ -64,10 +64,7 @@ function Team() {
           100
         )
 
-      console.log(
-        'TEAM PROJECTS:',
-        response
-      )
+
 
       setProjects(
         response.content
@@ -128,10 +125,7 @@ function Team() {
           projectId
         )
 
-      console.log(
-        'PROJECT MEMBERS:',
-        response
-      )
+
 
       setMembers(
         response

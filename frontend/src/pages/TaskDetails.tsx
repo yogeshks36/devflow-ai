@@ -196,10 +196,7 @@ ${task.description}
           )
 
 
-        console.log(
-          'TASK DETAILS:',
-          response
-        )
+        
 
 
         setTask(response)

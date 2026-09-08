@@ -110,10 +110,7 @@ function TaskComments({
         )
 
 
-      console.log(
-        'TASK COMMENTS:',
-        response
-      )
+
 
 
       setComments(
