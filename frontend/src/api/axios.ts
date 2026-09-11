@@ -3,10 +3,11 @@ import type {
   InternalAxiosRequestConfig,
 } from 'axios'
 
-
 const api = axios.create({
 
-  baseURL: 'http://localhost:8080/api',
+  baseURL:
+    import.meta.env.VITE_API_BASE_URL ||
+    'http://localhost:8080/api',
 
   timeout: 120000,
 
@@ -15,7 +16,6 @@ const api = axios.create({
   },
 
 })
-
 
 api.interceptors.request.use(
 
@@ -28,59 +28,36 @@ api.interceptors.request.use(
         'devflow_token'
       )
 
-
-   
-
-
-   
-
-
     if (token) {
 
       config.headers.Authorization =
         `Bearer ${token}`
 
-
-      
-
-    } else {
-
-      
-
     }
-
 
     return config
 
   },
-
 
   (error) =>
     Promise.reject(error)
 
 )
 
-
 api.interceptors.response.use(
 
   (response) => {
-
-    
 
     return response
 
   },
 
-
   (error) => {
-
-    
 
     return Promise.reject(error)
 
   }
 
 )
-
 
 export default api
