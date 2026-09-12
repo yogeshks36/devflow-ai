@@ -40,68 +40,50 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
-        System.out.println("========== JWT FILTER ==========");
-        System.out.println("Request: "
-                + request.getMethod()
-                + " "
-                + request.getRequestURI());
+        log.debug(
+                "JWT filter processing: {} {}",
+                request.getMethod(),
+                request.getRequestURI()
+        );
 
-        String authHeader = request.getHeader("Authorization");
+        String authHeader =
+                request.getHeader("Authorization");
 
-        System.out.println("Authorization header: " + authHeader);
-
-        // No token
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-
-            System.out.println("No Bearer token found.");
+        /*
+         * No JWT present.
+         *
+         * This is normal for endpoints such as:
+         * POST /api/auth/login
+         * POST /api/auth/register
+         */
+        if (authHeader == null
+                || !authHeader.startsWith("Bearer ")) {
 
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Extract token
         String jwt = authHeader.substring(7);
-
-        System.out.println("JWT received.");
 
         try {
 
-            // Extract email
-            String email = jwtService.extractEmail(jwt);
+            String email =
+                    jwtService.extractEmail(jwt);
 
-            System.out.println("JWT email: " + email);
-
-            // Only authenticate if not already authenticated
             if (email != null
                     && SecurityContextHolder
                             .getContext()
                             .getAuthentication() == null) {
 
-                System.out.println(
-                        "No existing authentication. Loading user..."
-                );
-
-                // Load user
                 UserDetails userDetails =
-                        userDetailsService.loadUserByUsername(email);
+                        userDetailsService
+                                .loadUserByUsername(email);
 
-                System.out.println(
-                        "User loaded: "
-                                + userDetails.getUsername()
-                );
-
-                System.out.println(
-                        "Authorities: "
-                                + userDetails.getAuthorities()
-                );
-
-                // Validate token
                 boolean valid =
-                        jwtService.isTokenValid(jwt, email);
-
-                System.out.println(
-                        "JWT valid: " + valid
-                );
+                        jwtService.isTokenValid(
+                                jwt,
+                                email
+                        );
 
                 if (valid) {
 
@@ -121,60 +103,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             .getContext()
                             .setAuthentication(authentication);
 
-                    System.out.println(
-                            "AUTHENTICATION SET SUCCESSFULLY"
-                    );
-
-                    System.out.println(
-                            "Authenticated user: "
-                                    + SecurityContextHolder
-                                            .getContext()
-                                            .getAuthentication()
-                                            .getName()
-                    );
-
-                    System.out.println(
-                            "Authorities: "
-                                    + SecurityContextHolder
-                                            .getContext()
-                                            .getAuthentication()
-                                            .getAuthorities()
-                    );
-
-                } else {
-
-                    System.out.println(
-                            "JWT INVALID - authentication NOT set"
+                    log.debug(
+                            "JWT authentication successful for user: {}",
+                            email
                     );
                 }
-
-            } else {
-
-                System.out.println(
-                        "Authentication already exists or email is null."
-                );
             }
 
         } catch (Exception e) {
 
-            System.out.println(
-                    "========== JWT ERROR =========="
-            );
-
-            System.out.println(
-                    "Exception: "
-                            + e.getClass().getName()
-            );
-
-            System.out.println(
-                    "Message: "
-                            + e.getMessage()
-            );
-
-            e.printStackTrace();
-
-            System.out.println(
-                    "=============================="
+            /*
+             * Invalid/expired JWT should not crash the request
+             * inside this filter.
+             *
+             * The request continues without authentication and
+             * Spring Security will decide whether authentication
+             * is required for the endpoint.
+             */
+            log.debug(
+                    "JWT authentication failed: {}",
+                    e.getMessage()
             );
         }
 
