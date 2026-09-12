@@ -21,7 +21,6 @@ import Projects from './components/Projects'
 import ProjectDetails from './components/ProjectDetails'
 import Tasks from './pages/Tasks'
 import TaskDetails from './pages/TaskDetails'
-import { AuthProvider } from './context/AuthContext'
 import AiTaskBreakdown from './components/AiTaskBreakdown'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -823,153 +822,134 @@ setTeamMemberCount(
 // =========================
 
 function App() {
-
   return (
+    <BrowserRouter>
+      <Routes>
 
-    <AuthProvider>
+        {/* PUBLIC ROUTE */}
 
-      <BrowserRouter>
+        <Route
+          path="/login"
+          element={
+            <Login />
+          }
+        />
 
-        <Routes>
+        {/* PROTECTED ROUTES */}
 
+        <Route
+          element={
+            <ProtectedRoute />
+          }
+        >
 
-          {/* PUBLIC ROUTE */}
+          {/* DASHBOARD */}
 
           <Route
-            path="/login"
+            path="/dashboard"
             element={
-              <Login />
+              <Dashboard />
             }
           />
 
+          <Route
+            path="/ai"
+            element={<AiTaskBreakdown />}
+          />
 
-          {/* PROTECTED ROUTES */}
+          {/* PROJECTS */}
 
           <Route
+            path="/projects"
             element={
-              <ProtectedRoute />
-            }
-          >
-
-
-            {/* DASHBOARD */}
-
-            <Route
-              path="/dashboard"
-              element={
-                <Dashboard />
-              }
-            />
-
-            <Route
-  path="/ai"
-  element={<AiTaskBreakdown />}
-/>
-
-
-            {/* PROJECTS */}
-
-            <Route
-              path="/projects"
-              element={
-                <Projects />
-              }
-            />
-
-
-            {/* PROJECT DETAILS */}
-
-            <Route
-              path="/projects/:projectId"
-              element={
-                <ProjectDetails />
-              }
-            />
-
-
-            {/* TASKS */}
-
-            <Route
-              path="/tasks"
-              element={
-                <Tasks />
-              }
-            />
-
-            {/* TASK DETAILS */}
-
-<Route
-  path="/tasks/:taskId"
-  element={
-    <TaskDetails />
-  }
-/>
-
-
-            {/* TEAM */}
-
-             <Route
-    path="/team"
-    element={
-      <div className="app">
-        <main className="main">
-
-          <h1>
-            Team
-          </h1>
-
-          <p className="subtitle">
-            Team management will be added next.
-          </p>
-
-          <Link
-            to="/dashboard"
-            className="secondary-button"
-          >
-            ← Back to Dashboard
-          </Link>
-
-        </main>
-      </div>
-    }
-  />
-
-</Route>
-
-
-          {/* ROOT */}
-
-          <Route
-            path="/"
-            element={
-              <Navigate
-                to="/dashboard"
-                replace
-              />
+              <Projects />
             }
           />
 
-
-          {/* UNKNOWN ROUTES */}
+          {/* PROJECT DETAILS */}
 
           <Route
-            path="*"
+            path="/projects/:projectId"
             element={
-              <Navigate
-                to="/dashboard"
-                replace
-              />
+              <ProjectDetails />
             }
           />
 
-        </Routes>
+          {/* TASKS */}
 
-      </BrowserRouter>
+          <Route
+            path="/tasks"
+            element={
+              <Tasks />
+            }
+          />
 
-    </AuthProvider>
+          {/* TASK DETAILS */}
 
+          <Route
+            path="/tasks/:taskId"
+            element={
+              <TaskDetails />
+            }
+          />
+
+          {/* TEAM */}
+
+          <Route
+            path="/team"
+            element={
+              <div className="app">
+                <main className="main">
+
+                  <h1>
+                    Team
+                  </h1>
+
+                  <p className="subtitle">
+                    Team management will be added next.
+                  </p>
+
+                  <Link
+                    to="/dashboard"
+                    className="secondary-button"
+                  >
+                    ← Back to Dashboard
+                  </Link>
+
+                </main>
+              </div>
+            }
+          />
+
+        </Route>
+
+        {/* ROOT */}
+
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to="/dashboard"
+              replace
+            />
+          }
+        />
+
+        {/* UNKNOWN ROUTES */}
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/dashboard"
+              replace
+            />
+          }
+        />
+
+      </Routes>
+    </BrowserRouter>
   )
-
 }
 
 export default App
