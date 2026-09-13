@@ -6,6 +6,7 @@ import { useAuth } from './context/AuthContext'
 import {
   getProjectMembers
 } from './api/projectMembersApi'
+
 import {
   BrowserRouter,
   Routes,
@@ -16,6 +17,7 @@ import {
 } from 'react-router-dom'
 
 import Login from './components/Login'
+import Register from './components/Register'
 import CreateProject from './components/CreateProject'
 import Projects from './components/Projects'
 import ProjectDetails from './components/ProjectDetails'
@@ -35,7 +37,10 @@ function Dashboard() {
 
   const navigate = useNavigate()
 
-  const { logout } = useAuth()
+  const {
+    user,
+    logout
+  } = useAuth()
 
 
   // =========================
@@ -61,7 +66,7 @@ function Dashboard() {
     useState<Task[]>([])
 
   const [teamMemberCount, setTeamMemberCount] =
-  useState(0)
+    useState(0)
 
 
   // =========================
@@ -81,53 +86,56 @@ function Dashboard() {
         )
 
 
-
       setProjects(
         response.content
       )
 
+
       // =========================
-// LOAD TEAM MEMBERS
-// =========================
+      // LOAD TEAM MEMBERS
+      // =========================
 
-const uniqueMemberIds =
-  new Set<number>()
+      const uniqueMemberIds =
+        new Set<number>()
 
-for (
-  const project of response.content
-) {
 
-  try {
+      for (
+        const project of response.content
+      ) {
 
-    const members =
-      await getProjectMembers(
-        project.id
-      )
+        try {
 
-    members.forEach(
-      (member) => {
+          const members =
+            await getProjectMembers(
+              project.id
+            )
 
-        uniqueMemberIds.add(
-          member.userId
-        )
+
+          members.forEach(
+            (member) => {
+
+              uniqueMemberIds.add(
+                member.userId
+              )
+
+            }
+          )
+
+        } catch (error) {
+
+          console.error(
+            `FAILED TO LOAD MEMBERS FOR PROJECT ${project.id}:`,
+            error
+          )
+
+        }
 
       }
-    )
 
-  } catch (error) {
 
-    console.error(
-      `FAILED TO LOAD MEMBERS FOR PROJECT ${project.id}:`,
-      error
-    )
-
-  }
-
-}
-
-setTeamMemberCount(
-  uniqueMemberIds.size
-)
+      setTeamMemberCount(
+        uniqueMemberIds.size
+      )
 
 
       // =========================
@@ -181,11 +189,6 @@ setTeamMemberCount(
         }
 
       }
-
-
-
-
-
 
 
       setRecentTasks(
@@ -313,11 +316,11 @@ setTeamMemberCount(
         <div className="profile">
 
           <div className="avatar">
-            Y
+            {user?.firstName?.charAt(0).toUpperCase() || 'U'}
           </div>
 
           <span>
-            Yogesh
+            {user?.firstName || 'User'}
           </span>
 
           <button
@@ -335,6 +338,7 @@ setTeamMemberCount(
           </button>
 
         </div>
+
 
       </header>
 
@@ -357,7 +361,7 @@ setTeamMemberCount(
             </p>
 
             <h1>
-              Welcome back, Yogesh 👋
+              Welcome back, {user?.firstName || 'User'} 👋
             </h1>
 
             <p className="subtitle">
@@ -436,9 +440,11 @@ setTeamMemberCount(
             </span>
 
             <strong>
+
               {loadingProjects
                 ? '...'
                 : completedTaskCount}
+
             </strong>
 
             <span className="stat-description">
@@ -455,8 +461,9 @@ setTeamMemberCount(
             </span>
 
             <strong>
-              {loadingProjects ? '...' : teamMemberCount}
-
+              {loadingProjects
+                ? '...'
+                : teamMemberCount}
             </strong>
 
             <span className="stat-description">
@@ -583,10 +590,8 @@ setTeamMemberCount(
                             </h3>
 
                             <p>
-
                               {project.description ||
                                 'No description provided.'}
-
                             </p>
 
                           </div>
@@ -707,19 +712,15 @@ setTeamMemberCount(
                         </h3>
 
                         <p>
-
                           {task.description ||
                             'No description provided.'}
-
                         </p>
 
                       </div>
 
 
                       <span className="task-status">
-
                         {task.status}
-
                       </span>
 
                     </div>
@@ -796,8 +797,6 @@ setTeamMemberCount(
 
           onCreated={() => {
 
-
-
             setShowCreateProject(
               false
             )
@@ -822,9 +821,13 @@ setTeamMemberCount(
 // =========================
 
 function App() {
+
   return (
+
     <BrowserRouter>
+
       <Routes>
+
 
         {/* PUBLIC ROUTE */}
 
@@ -834,6 +837,14 @@ function App() {
             <Login />
           }
         />
+
+        <Route
+          path="/register"
+          element={
+            <Register />
+          }
+        />
+
 
         {/* PROTECTED ROUTES */}
 
@@ -852,10 +863,12 @@ function App() {
             }
           />
 
+
           <Route
             path="/ai"
             element={<AiTaskBreakdown />}
           />
+
 
           {/* PROJECTS */}
 
@@ -866,6 +879,7 @@ function App() {
             }
           />
 
+
           {/* PROJECT DETAILS */}
 
           <Route
@@ -874,6 +888,7 @@ function App() {
               <ProjectDetails />
             }
           />
+
 
           {/* TASKS */}
 
@@ -884,6 +899,7 @@ function App() {
             }
           />
 
+
           {/* TASK DETAILS */}
 
           <Route
@@ -893,12 +909,14 @@ function App() {
             }
           />
 
+
           {/* TEAM */}
 
           <Route
             path="/team"
             element={
               <div className="app">
+
                 <main className="main">
 
                   <h1>
@@ -917,11 +935,13 @@ function App() {
                   </Link>
 
                 </main>
+
               </div>
             }
           />
 
         </Route>
+
 
         {/* ROOT */}
 
@@ -935,6 +955,7 @@ function App() {
           }
         />
 
+
         {/* UNKNOWN ROUTES */}
 
         <Route
@@ -947,9 +968,13 @@ function App() {
           }
         />
 
+
       </Routes>
+
     </BrowserRouter>
+
   )
+
 }
 
 export default App

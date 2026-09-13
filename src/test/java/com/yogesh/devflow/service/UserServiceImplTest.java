@@ -1,6 +1,8 @@
 package com.yogesh.devflow.service;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.util.Optional;
@@ -20,6 +22,7 @@ import com.yogesh.devflow.dto.response.LoginResponse;
 import com.yogesh.devflow.dto.response.RegisterResponse;
 import com.yogesh.devflow.entity.Role;
 import com.yogesh.devflow.entity.User;
+import com.yogesh.devflow.exception.InvalidCredentialsException;
 import com.yogesh.devflow.repository.UserRepository;
 import com.yogesh.devflow.security.JwtService;
 import com.yogesh.devflow.service.impl.UserServiceImpl;
@@ -163,9 +166,9 @@ class UserServiceImplTest {
         when(userRepository.findByEmail("unknown@gmail.com"))
                 .thenReturn(Optional.empty());
 
-        RuntimeException exception =
+        InvalidCredentialsException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        InvalidCredentialsException.class,
                         () -> userService.login(request)
                 );
 
@@ -194,9 +197,9 @@ class UserServiceImplTest {
                 "encodedPassword"))
                 .thenReturn(false);
 
-        RuntimeException exception =
+        InvalidCredentialsException exception =
                 assertThrows(
-                        RuntimeException.class,
+                        InvalidCredentialsException.class,
                         () -> userService.login(request)
                 );
 

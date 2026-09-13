@@ -74,3 +74,9 @@ Production deployment completed
 - AI-generated subtasks saved successfully
 - React Router SPA rewrite configured
 - Production smoke tests passed
+
+### Auth error handling
+- Added `InvalidCredentialsException` for invalid login credentials.
+- Invalid email and incorrect password now return HTTP 401 Unauthorized instead of HTTP 500.
+- Updated `UserServiceImplTest` to verify the specific `InvalidCredentialsException`.
+- Backend test suite passes successfully.

@@ -12,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import com.yogesh.devflow.exception.InvalidCredentialsException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -54,6 +55,24 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN)
                 .body(response);
     }
+
+    // =========================
+// 401 - INVALID CREDENTIALS
+// =========================
+
+@ExceptionHandler(InvalidCredentialsException.class)
+public ResponseEntity<Map<String, String>> handleInvalidCredentials(
+        InvalidCredentialsException ex) {
+
+    Map<String, String> response = new HashMap<>();
+
+    response.put("error", "Unauthorized");
+    response.put("message", ex.getMessage());
+
+    return ResponseEntity
+            .status(HttpStatus.UNAUTHORIZED)
+            .body(response);
+}
 
     // =========================
     // 400 - VALIDATION ERRORS

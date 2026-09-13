@@ -1,18 +1,21 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useState,
   type ReactNode,
 } from 'react'
 
-const TOKEN_KEY = 'devflow_token'
+import {
+  getCurrentUser,
+  type CurrentUser,
+} from '../api/userApi'
 
-interface JwtPayload {
-  sub?: string
-}
+const TOKEN_KEY = 'devflow_token'
 
 interface AuthContextType {
   token: string | null
+  user: CurrentUser | null
   userEmail: string | null
   isAuthenticated: boolean
   loginUser: (token: string) => void
@@ -27,43 +30,6 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
-
-// =========================
-// GET EMAIL FROM JWT
-// =========================
-
-function getUserEmailFromToken(
-  token: string | null
-): string | null {
-
-  if (!token) {
-    return null
-  }
-
-  try {
-
-    const payload =
-      token.split('.')[1]
-
-    const decodedPayload =
-      JSON.parse(
-        atob(payload)
-      ) as JwtPayload
-
-    return decodedPayload.sub || null
-
-  } catch (error) {
-
-    console.error(
-      'FAILED TO DECODE JWT:',
-      error
-    )
-
-    return null
-  }
-}
-
-
 export function AuthProvider({
   children,
 }: AuthProviderProps) {
@@ -76,11 +42,39 @@ export function AuthProvider({
         )
     )
 
+  const [user, setUser] =
+    useState<CurrentUser | null>(null)
 
-  const userEmail =
-    getUserEmailFromToken(
-      token
-    )
+  useEffect(() => {
+
+    if (!token) {
+      setUser(null)
+      return
+    }
+
+    const loadCurrentUser = async () => {
+
+      try {
+
+        const currentUser =
+          await getCurrentUser()
+
+        setUser(currentUser)
+
+      } catch (error) {
+
+        console.error(
+          'FAILED TO LOAD CURRENT USER:',
+          error
+        )
+
+      }
+
+    }
+
+    loadCurrentUser()
+
+  }, [token])
 
 
   const loginUser = (
@@ -92,9 +86,7 @@ export function AuthProvider({
       newToken
     )
 
-    setToken(
-      newToken
-    )
+    setToken(newToken)
   }
 
 
@@ -105,12 +97,14 @@ export function AuthProvider({
     )
 
     setToken(null)
+    setUser(null)
   }
 
 
   const value: AuthContextType = {
     token,
-    userEmail,
+    user,
+    userEmail: user?.email ?? null,
     isAuthenticated: !!token,
     loginUser,
     logout,
@@ -118,15 +112,9 @@ export function AuthProvider({
 
 
   return (
-
-    <AuthContext.Provider
-      value={value}
-    >
-
+    <AuthContext.Provider value={value}>
       {children}
-
     </AuthContext.Provider>
-
   )
 }
 
@@ -141,6 +129,7 @@ export function useAuth() {
     throw new Error(
       'useAuth must be used inside AuthProvider'
     )
+
   }
 
   return context

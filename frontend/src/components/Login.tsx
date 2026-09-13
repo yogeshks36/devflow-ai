@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import { login } from '../api/authApi'
 import { useAuth } from '../context/AuthContext'
@@ -237,6 +237,13 @@ function Login() {
           </button>
 
         </form>
+
+        <div className="register-link">
+          Don't have an account?{' '}
+          <Link to="/register">
+            Create one
+          </Link>
+        </div>
 
       </div>
 

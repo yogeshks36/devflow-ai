@@ -5,20 +5,21 @@ import java.util.List;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.yogesh.devflow.dto.request.ChangePasswordRequest;
 import com.yogesh.devflow.dto.request.LoginRequest;
 import com.yogesh.devflow.dto.request.RegisterRequest;
+import com.yogesh.devflow.dto.request.UpdateProfileRequest;
+import com.yogesh.devflow.dto.request.UpdateRoleRequest;
 import com.yogesh.devflow.dto.response.LoginResponse;
 import com.yogesh.devflow.dto.response.RegisterResponse;
 import com.yogesh.devflow.dto.response.UserResponse;
 import com.yogesh.devflow.entity.Role;
 import com.yogesh.devflow.entity.User;
+import com.yogesh.devflow.exception.InvalidCredentialsException;
 import com.yogesh.devflow.exception.ResourceNotFoundException;
 import com.yogesh.devflow.repository.UserRepository;
 import com.yogesh.devflow.security.JwtService;
 import com.yogesh.devflow.service.UserService;
-import com.yogesh.devflow.dto.request.UpdateProfileRequest;
-import com.yogesh.devflow.dto.request.UpdateRoleRequest;
-import com.yogesh.devflow.dto.request.ChangePasswordRequest;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -85,14 +86,16 @@ public class UserServiceImpl implements UserService {
         // Find user by email
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() ->
-                        new RuntimeException("Invalid email or password"));
+                        new InvalidCredentialsException(
+                                "Invalid email or password"));
 
         // Verify password against BCrypt hash
         if (!passwordEncoder.matches(
                 request.getPassword(),
                 user.getPassword())) {
 
-            throw new RuntimeException("Invalid email or password");
+            throw new InvalidCredentialsException(
+                    "Invalid email or password");
         }
 
         // Generate JWT
@@ -154,15 +157,16 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() ->
                         new RuntimeException("User not found"));
 
-    // Verify current password
+        // Verify current password
         if (!passwordEncoder.matches(
                 request.getCurrentPassword(),
                 user.getPassword())) {
 
-            throw new RuntimeException("Current password is incorrect");
+            throw new RuntimeException(
+                    "Current password is incorrect");
         }
 
-    // Prevent using the same password
+        // Prevent using the same password
         if (passwordEncoder.matches(
                 request.getNewPassword(),
                 user.getPassword())) {
@@ -171,7 +175,7 @@ public class UserServiceImpl implements UserService {
                     "New password must be different from current password");
         }
 
-    // Encode and save new password
+        // Encode and save new password
         user.setPassword(
                 passwordEncoder.encode(
                         request.getNewPassword()
@@ -182,11 +186,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-        public UserResponse updateUserRole(Long userId, UpdateRoleRequest request) {
+    public UserResponse updateUserRole(
+            Long userId,
+            UpdateRoleRequest request) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("User not found with id: " + userId)
+                        new ResourceNotFoundException(
+                                "User not found with id: " + userId)
                 );
 
         user.setRole(request.getRole());
